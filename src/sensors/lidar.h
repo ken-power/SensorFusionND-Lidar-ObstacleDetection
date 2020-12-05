@@ -87,20 +87,20 @@ struct Lidar
 	{
 		// TODO:: set minDistance to 5 to remove points from roof of ego car
 		minDistance = 5;
-		maxDistance = 50;
-		resoultion = 0.2;
+		maxDistance = 75;
+		resoultion = 0.5;
 		// TODO:: set sderr to 0.2 to get more interesting pcd files
-		sderr = 0.2; // Adds noise
+		sderr = 0.25; // Adds noise
 		cars = setCars;
 		groundSlope = setGroundSlope;
 
 		// TODO:: increase number of layers to 8 to get higher resoultion pcd
-		int numLayers = 8;
+		int numLayers = 24;
 		// the steepest vertical angle
 		double steepestAngle =  30.0*(-pi/180);
 		double angleRange = 26.0*(pi/180);
 		// TODO:: set to pi/64 to get higher resoultion pcd
-		double horizontalAngleInc = pi/64;
+		double horizontalAngleInc = pi/256;
 
 		double angleIncrement = angleRange/numLayers;
 
