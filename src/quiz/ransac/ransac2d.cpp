@@ -81,24 +81,25 @@ std::unordered_set<int> RansacPlane(pcl::PointCloud<pcl::PointXYZ>::Ptr cloud, i
 		const int dimensions = 3;
 		while(inliers.size() < dimensions)
 			inliers.insert(rand() % (cloud->points.size()));
-		
-		float x1, y1, z1, x2, y2, z2, x3, y3, z3;
 
-		auto itr = inliers.begin();
+		auto iterator = inliers.begin();
 
-		x1 = cloud->points[*itr].x;
-		y1 = cloud->points[*itr].y;
-		z1 = cloud->points[*itr].z;
+		pcl::PointXYZ p1 = cloud->points[*iterator];
+		float x1 = p1.x;
+		float y1 = p1.y;
+		float z1 = p1.z;
 
-		itr++;
-		x2 = cloud->points[*itr].x;
-		y2 = cloud->points[*itr].y;
-		z2 = cloud->points[*itr].z;
+		iterator++;
+		pcl::PointXYZ p2 = cloud->points[*iterator];
+		float x2 = p2.x;
+		float y2 = p2.y;
+		float z2 = p2.z;
 
-		itr++;
-		x3 = cloud->points[*itr].x;
-		y3 = cloud->points[*itr].y;
-		z3 = cloud->points[*itr].z;
+		iterator++;
+		pcl::PointXYZ p3 =  cloud->points[*iterator];
+		float x3 = p3.x;
+		float y3 = p3.y;
+		float z3 = p3.z;
 
 		float A = (y2-y1)*(z3-z1) - (z2-z1)*(y3-y1);
 		float B = (z2-z1)*(x3-x1) - (x2-x1)*(z3-z1);
@@ -120,8 +121,9 @@ std::unordered_set<int> RansacPlane(pcl::PointCloud<pcl::PointXYZ>::Ptr cloud, i
 
 			// If distance is smaller than threshold count it as inlier
 			if(distance <= distanceTol)
-				std::cout << "Adding distance measure " << distance << std::endl;
+			{
 				inliers.insert(index);
+			}
 		}
 
 		if(inliers.size() > inliersResult.size())
@@ -161,12 +163,12 @@ std::unordered_set<int> Ransac(pcl::PointCloud<pcl::PointXYZ>::Ptr cloud, int ma
 		
 		float x1, y1, x2, y2;
 
-		auto itr = inliers.begin();
-		x1 = cloud->points[*itr].x;
-		y1 = cloud->points[*itr].y;
-		itr++;
-		x2 = cloud->points[*itr].x;
-		y2 = cloud->points[*itr].y;
+		auto iterator = inliers.begin();
+		x1 = cloud->points[*iterator].x;
+		y1 = cloud->points[*iterator].y;
+		iterator++;
+		x2 = cloud->points[*iterator].x;
+		y2 = cloud->points[*iterator].y;
 
 		float a = (y1-y2);
 		float b = (x2-x1);
@@ -217,7 +219,7 @@ int main ()
 
 	// Change the max iteration and distance tolerance arguments for Ransac function
 	//std::unordered_set<int> inliers = Ransac(cloud, 10, 1.0);
-	std::unordered_set<int> inliers = RansacPlane(cloud, 5, 0.5);
+	std::unordered_set<int> inliers = RansacPlane(cloud, 20, 0.2);
 
 	pcl::PointCloud<pcl::PointXYZ>::Ptr  cloudInliers(new pcl::PointCloud<pcl::PointXYZ>());
 	pcl::PointCloud<pcl::PointXYZ>::Ptr cloudOutliers(new pcl::PointCloud<pcl::PointXYZ>());
