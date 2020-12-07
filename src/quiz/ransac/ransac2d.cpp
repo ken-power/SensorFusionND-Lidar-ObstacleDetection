@@ -63,20 +63,63 @@ pcl::visualization::PCLVisualizer::Ptr initScene()
 
 std::unordered_set<int> Ransac(pcl::PointCloud<pcl::PointXYZ>::Ptr cloud, int maxIterations, float distanceTol)
 {
-	std::unordered_set<int> inliersResult;
+	auto startTime = std::chrono::steady_clock::now();
+
+	std::unordered_set<int> inliersResult;  // hold the best inliers
 	srand(time(NULL));
 	
-	// TODO: Fill in this function
-
 	// For max iterations 
+	while(maxIterations--)
+	{
+		// Randomly sample subset and fit line
+		// Randomly pick two points
+		std::unordered_set<int> inliers;
 
-	// Randomly sample subset and fit line
+		while(inliers.size() < 2)
+			inliers.insert(rand() % (cloud->points.size()));
+		
+		float x1, y1, x2, y2;
 
-	// Measure distance between every point and fitted line
-	// If distance is smaller than threshold count it as inlier
+		auto itr = inliers.begin();
+		x1 = cloud->points[*itr].x;
+		y1 = cloud->points[*itr].y;
+		itr++;
+		x2 = cloud->points[*itr].x;
+		y2 = cloud->points[*itr].y;
+
+		float a = (y1-y2);
+		float b = (x2-x1);
+		float c = (x1*y2 - x2*y1);
+
+		// Measure distance between every point and fitted line
+		for(int index=0; index < cloud->points.size(); index++)
+		{
+			if(inliers.count(index)>0)
+				continue;
+
+			pcl::PointXYZ point = cloud->points[index];
+			float x3 = point.x;
+			float y3 = point.y;
+
+			float d = fabs(a*x3 + b*y3 + c)/sqrt(a*a + b*b);
+
+			// If distance is smaller than threshold count it as inlier
+			if(d <= distanceTol)
+				inliers.insert(index);
+		}
+
+		if(inliers.size() > inliersResult.size())
+		{
+			inliersResult = inliers;
+		}
+	}
+	
+
+	auto endTime = std::chrono::steady_clock::now();
+	auto elapsedTime = std::chrono::duration_cast<std::chrono::milliseconds>(endTime - startTime);
+	std::cout << "RANSAC took " << elapsedTime.count() << " milliseconds" << std::endl;
 
 	// Return indicies of inliers from fitted line with most inliers
-	
 	return inliersResult;
 
 }
@@ -92,7 +135,7 @@ int main ()
 	
 
 	// TODO: Change the max iteration and distance tolerance arguments for Ransac function
-	std::unordered_set<int> inliers = Ransac(cloud, 0, 0);
+	std::unordered_set<int> inliers = Ransac(cloud, 10, 1.0);
 
 	pcl::PointCloud<pcl::PointXYZ>::Ptr  cloudInliers(new pcl::PointCloud<pcl::PointXYZ>());
 	pcl::PointCloud<pcl::PointXYZ>::Ptr cloudOutliers(new pcl::PointCloud<pcl::PointXYZ>());
