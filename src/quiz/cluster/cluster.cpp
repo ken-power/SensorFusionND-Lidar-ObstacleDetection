@@ -114,13 +114,26 @@ int main ()
   	int it = 0;
   	render2DTree(tree->root,viewer,window, it);
   
-  	std::cout << "Test Search" << std::endl;
+  	std::cout << "Test Search for cluster 1" << std::endl;
   	std::vector<int> nearby = tree->search({-6,7},3.0);
   	for(int index : nearby)
       std::cout << index << ",";
   	std::cout << std::endl;
 
-  	// Time segmentation process
+
+    std::cout << "Test Search for cluster 2" << std::endl;
+    nearby = tree->search({8.1,5.3},3.0);
+    for(int index : nearby)
+        std::cout << index << ",";
+    std::cout << std::endl;
+
+    std::cout << "Test Search for cluster 3" << std::endl;
+    nearby = tree->search({2.123,-8.193},3.0);
+    for(int index : nearby)
+        std::cout << index << ",";
+    std::cout << std::endl;
+
+    // Time segmentation process
   	auto startTime = std::chrono::steady_clock::now();
   	//
   	std::vector<std::vector<int>> clusters = euclideanCluster(points, tree, 3.0);
