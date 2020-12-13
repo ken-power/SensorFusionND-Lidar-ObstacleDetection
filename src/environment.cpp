@@ -56,12 +56,41 @@ void simpleHighway(pcl::visualization::PCLVisualizer::Ptr& viewer)
     // Create point processor
     ProcessPointClouds<pcl::PointXYZ> pointProcessor;
 
-    int maxIterations = 50;
-    float distanceThreshold = 0.4;
+    int maxIterations = 100;
+    float distanceThreshold = 0.6;
 
     std::pair<pcl::PointCloud<pcl::PointXYZ>::Ptr, pcl::PointCloud<pcl::PointXYZ>::Ptr> segmentCloud = pointProcessor.SegmentPlane(inputPointCloud, maxIterations, distanceThreshold);
-    renderPointCloud(viewer, segmentCloud.first, "obstCloud", Color(1,0,0));
-    renderPointCloud(viewer, segmentCloud.second, "planeCloud", Color(0,1,0));      
+    renderPointCloud(viewer, segmentCloud.first, "obstacleCloud", Color(1,0,0));
+    renderPointCloud(viewer, segmentCloud.second, "planeCloud", Color(0,1,0));
+
+    float distanceTolerance = 0.9;
+    int minClustersize = 30; // needs to have at least this many points to be considered a cluster
+    int maxClustersize = 400;
+
+    std::cout << "Hyperparameter Summery: {Distance Tolerance = " << distanceTolerance << "}, {Min. Cluster Size = " << minClustersize << "}, {Max. Cluster Size = " << maxClustersize << "}" << std::endl;
+
+    std::vector<pcl::PointCloud<pcl::PointXYZ>::Ptr> cloudClusters = pointProcessor.Clustering(segmentCloud.first, distanceTolerance, minClustersize, maxClustersize);
+
+    std::vector<Color> colors = {
+            Color(1,0,0),
+            Color(1,1,0),
+            Color(0,0,1)
+    };
+
+    int clusterId = 0;
+    for(pcl::PointCloud<pcl::PointXYZ>::Ptr cluster : cloudClusters)
+    {
+        unsigned int clusterColor = clusterId % colors.size();
+        Color color = (Color) colors[clusterColor];
+        std::string cloudName = "obstacleCloud_" + std::to_string(clusterId);
+
+        renderPointCloud(viewer, cluster, cloudName, color);
+
+        Box box = pointProcessor.BoundingBox(cluster);
+        renderBox(viewer, box, clusterId);
+
+        ++clusterId;
+    }
 }
 
 
@@ -92,6 +121,8 @@ void initCamera(CameraAngle setAngle, pcl::visualization::PCLVisualizer::Ptr& vi
 int main (int argc, char** argv)
 {
     std::cout << "starting enviroment" << std::endl;
+
+
 
     pcl::visualization::PCLVisualizer::Ptr viewer (new pcl::visualization::PCLVisualizer ("3D Viewer"));
     CameraAngle setAngle = XY;
