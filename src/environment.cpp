@@ -8,6 +8,9 @@
 // using templates for processPointClouds so also include .cpp to help linker
 #include "processPointClouds.cpp"
 
+static const bool renderClusters = true;
+static const bool renderBoundingBoxes = true;
+
 std::vector<Car> initHighway(bool renderScene, pcl::visualization::PCLVisualizer::Ptr& viewer)
 {
 
@@ -84,11 +87,16 @@ void simpleHighway(pcl::visualization::PCLVisualizer::Ptr& viewer)
         Color color = (Color) colors[clusterColor];
         std::string cloudName = "obstacleCloud_" + std::to_string(clusterId);
 
-        renderPointCloud(viewer, cluster, cloudName, color);
+        if(renderClusters)
+        {
+            renderPointCloud(viewer, cluster, cloudName, color);
+        }
 
-        Box box = pointProcessor.BoundingBox(cluster);
-        renderBox(viewer, box, clusterId);
-
+        if(renderBoundingBoxes)
+        {
+            Box box = pointProcessor.BoundingBox(cluster);
+            renderBox(viewer, box, clusterId);
+        }
         ++clusterId;
     }
 }
