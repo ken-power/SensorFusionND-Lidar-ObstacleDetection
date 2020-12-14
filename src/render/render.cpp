@@ -42,12 +42,12 @@ void clearRays(pcl::visualization::PCLVisualizer::Ptr& viewer)
 
 void renderPointCloud(pcl::visualization::PCLVisualizer::Ptr& viewer, const pcl::PointCloud<pcl::PointXYZ>::Ptr& cloud, std::string name, Color color)
 {
-    std::cout << "Rendering PointCloud '" << name << "'; Cluster Size = " << cloud->size() << "; Color = [R:" << color.r << " G:" << color.g << " B:" << color.b << "]" << std::endl;
+    //std::cout << "Rendering PointCloud '" << name << "'; Cluster Size = " << cloud->size() << "; Color = [R:" << color.r << " G:" << color.g << " B:" << color.b << "]" << std::endl;
 
     viewer->addPointCloud<pcl::PointXYZ> (cloud, name);
   	viewer->setPointCloudRenderingProperties (pcl::visualization::PCL_VISUALIZER_POINT_SIZE, 4, name);
   	viewer->setPointCloudRenderingProperties (pcl::visualization::PCL_VISUALIZER_COLOR, color.r, color.g, color.b, name);
-  	// viewer->setBackgroundColor(0.1,0.3,0.4);
+  	viewer->setBackgroundColor(0,0,0);
 }
 
 void renderPointCloud(pcl::visualization::PCLVisualizer::Ptr& viewer, const pcl::PointCloud<pcl::PointXYZI>::Ptr& cloud, std::string name, Color color)

@@ -52,7 +52,7 @@ struct KdTree
             }
         }
 
-	    std::cout << "Inserted (" << point[0] << "," << point[1] << ") at depth " << depth << " on the " << location << std::endl;
+	    //std::cout << "Inserted (" << point[0] << "," << point[1] << ") at depth " << depth << " on the " << location << std::endl;
     }
 
 
@@ -66,8 +66,9 @@ struct KdTree
     {
 	    if(node!=NULL)
         {
-	        if( (node->point[0] >= target[0]-distanceTolerance) && node->point[0] <=(target[0]+distanceTolerance) &&
-	            (node->point[1] >= target[1]-distanceTolerance) && node->point[1] <=(target[1]+distanceTolerance)
+	        if(
+	                (node->point[0] >= (target[0]-distanceTolerance) && node->point[0] <=(target[0]+distanceTolerance)) &&
+	                (node->point[1] >= (target[1]-distanceTolerance) && node->point[1] <=(target[1]+distanceTolerance))
 	        )
             {
 	            float distance = sqrt(
@@ -101,7 +102,6 @@ struct KdTree
 
 		return ids;
 	}
-
 };
 
 
