@@ -11,9 +11,9 @@
 
 static const bool renderClusters = true;
 static const bool renderBoundingBoxes = false;
-static const bool renderPCABoundingBoxes = true;
+static const bool renderPCABoundingBoxes = false;
 
-typedef pcl::visualization::PointCloudColorHandlerCustom<pcl::PointXYZ> ColorHandlerXYZ;
+typedef pcl::visualization::PointCloudColorHandlerCustom<pcl::PointXYZI> ColorHandlerXYZ;
 
 std::vector<Car> initHighway(bool renderScene, pcl::visualization::PCLVisualizer::Ptr& viewer)
 {
@@ -41,7 +41,7 @@ std::vector<Car> initHighway(bool renderScene, pcl::visualization::PCLVisualizer
     return cars;
 }
 
-
+/**
 void simpleHighway(pcl::visualization::PCLVisualizer::Ptr& viewer)
 {
     // ----------------------------------------------------
@@ -151,7 +151,7 @@ void simpleHighway(pcl::visualization::PCLVisualizer::Ptr& viewer)
         ++clusterId;
     }
 }
-
+*/
 
 //setAngle: SWITCH CAMERA ANGLE {XY, TopDown, Side, FPS}
 void initCamera(CameraAngle setAngle, pcl::visualization::PCLVisualizer::Ptr& viewer)
@@ -177,16 +177,119 @@ void initCamera(CameraAngle setAngle, pcl::visualization::PCLVisualizer::Ptr& vi
 }
 
 
+void cityBlock(pcl::visualization::PCLVisualizer::Ptr& viewer)
+{
+    // ----------------------------------------------------
+    // -----Open 3D viewer and display City Block     -----
+    // ----------------------------------------------------
+
+    ProcessPointClouds<pcl::PointXYZI>* pointProcessorI = new ProcessPointClouds<pcl::PointXYZI>();
+    std::string pcdFile = "../src/sensors/data/pcd/data_1/0000000000.pcd";
+    pcl::PointCloud<pcl::PointXYZI>::Ptr inputPointCloud = pointProcessorI->loadPcd(pcdFile);
+
+
+    int maxIterations = 100;
+    float distanceThreshold = 0.6;
+
+    std::pair<pcl::PointCloud<pcl::PointXYZI>::Ptr, pcl::PointCloud<pcl::PointXYZI>::Ptr> segmentCloud = pointProcessorI->SegmentPlane(inputPointCloud, maxIterations, distanceThreshold);
+    renderPointCloud(viewer, segmentCloud.first, "obstacleCloud", Color(1,0,0));
+    renderPointCloud(viewer, segmentCloud.second, "planeCloud", Color(0,1,0));
+
+    float distanceTolerance = 0.9;
+    int minClustersize = 30; // needs to have at least this many points to be considered a cluster
+    int maxClustersize = 400;
+
+    std::cout << "Hyperparameter Summery: {Distance Tolerance = " << distanceTolerance << "}, {Min. Cluster Size = " << minClustersize << "}, {Max. Cluster Size = " << maxClustersize << "}" << std::endl;
+
+    std::vector<pcl::PointCloud<pcl::PointXYZI>::Ptr> cloudClusters = pointProcessorI->Clustering(segmentCloud.first, distanceTolerance, minClustersize, maxClustersize);
+
+    std::vector<Color> colors = {
+            Color(1,0,0),
+            Color(1,1,0),
+            Color(0,0,1)
+    };
+
+    int clusterId = 0;
+    for(pcl::PointCloud<pcl::PointXYZI>::Ptr cluster : cloudClusters)
+    {
+        unsigned int clusterColor = clusterId % colors.size();
+        Color color = (Color) colors[clusterColor];
+        std::string cloudName = "obstacleCloud_" + std::to_string(clusterId);
+
+        if(renderClusters)
+        {
+            renderPointCloud(viewer, cluster, cloudName, color);
+        }
+
+        if(renderBoundingBoxes)
+        {
+            Box box = pointProcessorI->BoundingBox(cluster);
+            renderBox(viewer, box, clusterId);
+        }
+
+        if(renderPCABoundingBoxes)
+        {
+            // With help from these articles/sources:
+            // http://codextechnicanum.blogspot.com/2015/04/find-minimum-oriented-bounding-box-of.html
+            // http://www.pcl-users.org/Finding-oriented-bounding-box-of-a-cloud-td4024616.html
+            // https://en.wikipedia.org/wiki/Minimum_bounding_box
+            // https://en.wikipedia.org/wiki/Principal_component_analysis
+
+            // Compute principal directions
+            Eigen::Vector4f pcaCentroid;
+            pcl::compute3DCentroid(*cluster, pcaCentroid);
+            Eigen::Matrix3f covarianceMatrix;
+            computeCovarianceMatrixNormalized(*cluster, pcaCentroid, covarianceMatrix);
+            Eigen::SelfAdjointEigenSolver<Eigen::Matrix3f> eigenSolver(covarianceMatrix, Eigen::ComputeEigenvectors);
+            Eigen::Matrix3f eigenVectorsPCA = eigenSolver.eigenvectors();
+            eigenVectorsPCA.col(2) = eigenVectorsPCA.col(0).cross(eigenVectorsPCA.col(1));
+            /// This line is necessary for proper orientation in some cases. The numbers come out the same without it, but
+            ///    the signs are different and the box doesn't get correctly oriented in some cases.
+
+            // Transform the original cloud to the origin where the principal components correspond to the axes
+            Eigen::Matrix4f projectionTransform(Eigen::Matrix4f::Identity());
+            projectionTransform.block<3,3>(0,0) = eigenVectorsPCA.transpose();
+            projectionTransform.block<3,1>(0,3) = -1.f * (projectionTransform.block<3,3>(0,0) * pcaCentroid.head<3>());
+            pcl::PointCloud<pcl::PointXYZI>::Ptr cloudPointsProjected (new pcl::PointCloud<pcl::PointXYZI>);
+            pcl::transformPointCloud(*cluster, *cloudPointsProjected, projectionTransform);
+
+            // Get the minimum and maximum points of the transformed cloud
+            pcl::PointXYZI minPoint, maxPoint;
+            pcl::getMinMax3D(*cloudPointsProjected, minPoint, maxPoint);
+            const Eigen::Vector3f meanDiagonal = 0.5f*(maxPoint.getVector3fMap() + minPoint.getVector3fMap());
+
+            // Final transform
+            // Quaternions are a way to do rotations https://www.youtube.com/watch?v=mHVwd8gYLnI
+            const Eigen::Quaternionf bboxQuaternion(eigenVectorsPCA);
+            const Eigen::Vector3f bboxTransform = eigenVectorsPCA * meanDiagonal + pcaCentroid.head<3>();
+
+            // Create the quaternion box structure that allows for rotations
+            BoxQ quaternionBox = BoxQ();
+            quaternionBox.bboxTransform = bboxTransform;
+            quaternionBox.bboxQuaternion = bboxQuaternion;
+            quaternionBox.cube_height = maxPoint.z - minPoint.z;
+            quaternionBox.cube_width = maxPoint.x - minPoint.x;
+            quaternionBox.cube_length = maxPoint.y - minPoint.y;
+
+            renderBox(viewer, quaternionBox, clusterId);
+        }
+        ++clusterId;
+    }
+
+
+    renderPointCloud(viewer,inputPointCloud,"inputCloud");
+}
+
+
 int main (int argc, char** argv)
 {
     std::cout << "starting enviroment" << std::endl;
 
-
-
     pcl::visualization::PCLVisualizer::Ptr viewer (new pcl::visualization::PCLVisualizer ("3D Viewer"));
     CameraAngle setAngle = XY;
     initCamera(setAngle, viewer);
-    simpleHighway(viewer);
+    //simpleHighway(viewer);
+    cityBlock(viewer);
 
     while (!viewer->wasStopped ())
     {

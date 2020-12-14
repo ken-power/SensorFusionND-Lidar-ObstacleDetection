@@ -54,14 +54,12 @@ void renderPointCloud(pcl::visualization::PCLVisualizer::Ptr& viewer, const pcl:
 {
 	if(color.r==-1)
 	{
-        std::cout << "renderPointCloud 2 if" << std::endl;
 		// Select color based off of cloud intensity
 		pcl::visualization::PointCloudColorHandlerGenericField<pcl::PointXYZI> intensity_distribution(cloud,"intensity");
   		viewer->addPointCloud<pcl::PointXYZI>(cloud, intensity_distribution, name);
 	}
 	else
 	{
-        std::cout << "renderPointClout 2 else" << std::endl;
 		// Select color based off input value
 		viewer->addPointCloud<pcl::PointXYZI> (cloud, name);
 		viewer->setPointCloudRenderingProperties (pcl::visualization::PCL_VISUALIZER_COLOR, color.r, color.g, color.b, name);

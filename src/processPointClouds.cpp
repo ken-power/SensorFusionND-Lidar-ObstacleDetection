@@ -110,11 +110,11 @@ std::vector<typename pcl::PointCloud<PointT>::Ptr> ProcessPointClouds<PointT>::C
     // Perform euclidean clustering to group detected obstacles
     // Creating the KdTree object for the search method of the extraction
     // Ref: https://pcl.readthedocs.io/projects/tutorials/en/latest/cluster_extraction.html#cluster-extraction
-    pcl::search::KdTree<pcl::PointXYZ>::Ptr tree (new pcl::search::KdTree<pcl::PointXYZ>);
+    pcl::search::KdTree<pcl::PointXYZI>::Ptr tree (new pcl::search::KdTree<pcl::PointXYZI>);
     tree->setInputCloud (cloud);
 
     std::vector<pcl::PointIndices> clusterIndices;
-    pcl::EuclideanClusterExtraction<pcl::PointXYZ> euclideanCluster;
+    pcl::EuclideanClusterExtraction<pcl::PointXYZI> euclideanCluster;
     euclideanCluster.setClusterTolerance (clusterTolerance); // tolerance in meters, so 0.02 = 2cm
     euclideanCluster.setMinClusterSize (minSize);
     euclideanCluster.setMaxClusterSize (maxSize);
