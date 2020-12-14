@@ -7,9 +7,13 @@
 #include "processPointClouds.h"
 // using templates for processPointClouds so also include .cpp to help linker
 #include "processPointClouds.cpp"
+#include <Eigen/Geometry>
 
 static const bool renderClusters = true;
-static const bool renderBoundingBoxes = true;
+static const bool renderBoundingBoxes = false;
+static const bool renderPCABoundingBoxes = true;
+
+typedef pcl::visualization::PointCloudColorHandlerCustom<pcl::PointXYZ> ColorHandlerXYZ;
 
 std::vector<Car> initHighway(bool renderScene, pcl::visualization::PCLVisualizer::Ptr& viewer)
 {
@@ -96,6 +100,53 @@ void simpleHighway(pcl::visualization::PCLVisualizer::Ptr& viewer)
         {
             Box box = pointProcessor.BoundingBox(cluster);
             renderBox(viewer, box, clusterId);
+        }
+
+        if(renderPCABoundingBoxes)
+        {
+            // With help from these articles/sources:
+            // http://codextechnicanum.blogspot.com/2015/04/find-minimum-oriented-bounding-box-of.html
+            // http://www.pcl-users.org/Finding-oriented-bounding-box-of-a-cloud-td4024616.html
+            // https://en.wikipedia.org/wiki/Minimum_bounding_box
+            // https://en.wikipedia.org/wiki/Principal_component_analysis
+
+            // Compute principal directions
+            Eigen::Vector4f pcaCentroid;
+            pcl::compute3DCentroid(*cluster, pcaCentroid);
+            Eigen::Matrix3f covarianceMatrix;
+            computeCovarianceMatrixNormalized(*cluster, pcaCentroid, covarianceMatrix);
+            Eigen::SelfAdjointEigenSolver<Eigen::Matrix3f> eigenSolver(covarianceMatrix, Eigen::ComputeEigenvectors);
+            Eigen::Matrix3f eigenVectorsPCA = eigenSolver.eigenvectors();
+            eigenVectorsPCA.col(2) = eigenVectorsPCA.col(0).cross(eigenVectorsPCA.col(1));
+            /// This line is necessary for proper orientation in some cases. The numbers come out the same without it, but
+            ///    the signs are different and the box doesn't get correctly oriented in some cases.
+
+            // Transform the original cloud to the origin where the principal components correspond to the axes
+            Eigen::Matrix4f projectionTransform(Eigen::Matrix4f::Identity());
+            projectionTransform.block<3,3>(0,0) = eigenVectorsPCA.transpose();
+            projectionTransform.block<3,1>(0,3) = -1.f * (projectionTransform.block<3,3>(0,0) * pcaCentroid.head<3>());
+            pcl::PointCloud<pcl::PointXYZ>::Ptr cloudPointsProjected (new pcl::PointCloud<pcl::PointXYZ>);
+            pcl::transformPointCloud(*cluster, *cloudPointsProjected, projectionTransform);
+
+            // Get the minimum and maximum points of the transformed cloud
+            pcl::PointXYZ minPoint, maxPoint;
+            pcl::getMinMax3D(*cloudPointsProjected, minPoint, maxPoint);
+            const Eigen::Vector3f meanDiagonal = 0.5f*(maxPoint.getVector3fMap() + minPoint.getVector3fMap());
+
+            // Final transform
+            // Quaternions are a way to do rotations https://www.youtube.com/watch?v=mHVwd8gYLnI
+            const Eigen::Quaternionf bboxQuaternion(eigenVectorsPCA);
+            const Eigen::Vector3f bboxTransform = eigenVectorsPCA * meanDiagonal + pcaCentroid.head<3>();
+
+            // Create the quaternion box structure that allows for rotations
+            BoxQ quaternionBox = BoxQ();
+            quaternionBox.bboxTransform = bboxTransform;
+            quaternionBox.bboxQuaternion = bboxQuaternion;
+            quaternionBox.cube_height = maxPoint.z - minPoint.z;
+            quaternionBox.cube_width = maxPoint.x - minPoint.x;
+            quaternionBox.cube_length = maxPoint.y - minPoint.y;
+
+            renderBox(viewer, quaternionBox, clusterId);
         }
         ++clusterId;
     }
