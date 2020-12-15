@@ -1,159 +1,31 @@
-/* \author Aaron Brown */
-// Create simple 3d highway enviroment using PCL
-// for exploring self-driving car sensors
-
-#include "sensors/lidar.h"
 #include "render/render.h"
 #include "processPointClouds.h"
 // using templates for processPointClouds so also include .cpp to help linker
 #include "processPointClouds.cpp"
 #include <Eigen/Geometry>
 
-static const bool renderClusters = true;
-static const bool renderBoundingBoxes = true;
-static const bool renderPCABoundingBoxes = false;
 
-typedef pcl::visualization::PointCloudColorHandlerCustom<pcl::PointXYZI> ColorHandlerXYZ;
+// Use these constants to enable/disable various rendering options
+static const bool RENDER_CLUSTERS = true;
+static const bool RENDER_BOUNDING_BOXES = true;
+static const bool RENDER_PCA_BOUNDING_BOXES = false;
 
-std::vector<Car> initHighway(bool renderScene, pcl::visualization::PCLVisualizer::Ptr& viewer)
+static struct ClusteringHyperParameters
 {
+    const float distanceTolerance = 0.5;
+    const int minClustersize = 15; // needs to have at least this many points to be considered a cluster
+    const int maxClustersize = 400;
 
-    Car egoCar( Vect3(0,0,0), Vect3(4,2,2), Color(0,1,0), "egoCar");
-    Car car1( Vect3(15,0,0), Vect3(4,2,2), Color(0,0,1), "car1");
-    Car car2( Vect3(8,-4,0), Vect3(4,2,2), Color(0,0,1), "car2");	
-    Car car3( Vect3(-12,4,0), Vect3(4,2,2), Color(0,0,1), "car3");
-  
-    std::vector<Car> cars;
-    cars.push_back(egoCar);
-    cars.push_back(car1);
-    cars.push_back(car2);
-    cars.push_back(car3);
-
-    if(renderScene)
-    {
-        renderHighway(viewer);
-        egoCar.render(viewer);
-        car1.render(viewer);
-        car2.render(viewer);
-        car3.render(viewer);
+    void printHyperParameters() {
+        std::cout << "Hyperparameter Summery: "
+                  << "{Distance Tolerance = " << distanceTolerance
+                  << "}, {Min. Cluster Size = " << minClustersize
+                  << "}, {Max. Cluster Size = " << maxClustersize << "}"
+                  << std::endl;
     }
+} CLUSTERING_HYPER_PARAMS;
 
-    return cars;
-}
 
-/**
-void simpleHighway(pcl::visualization::PCLVisualizer::Ptr& viewer)
-{
-    // ----------------------------------------------------
-    // -----Open 3D viewer and display simple highway -----
-    // ----------------------------------------------------
-    
-    // RENDER OPTIONS
-    bool renderScene = false;
-    std::vector<Car> cars = initHighway(renderScene, viewer);
-    
-    // Create lidar sensor 
-    double slope = 0.0;
-    Lidar* lidar = new Lidar(cars, slope);
-
-    pcl::PointCloud<pcl::PointXYZ>::Ptr inputPointCloud = lidar->scan();
-    //renderRays(viewer, lidar->position, inputPointCloud);
-    //renderPointCloud(viewer, inputPointCloud, "inputPointCloud");
-
-    // Create point processor
-    ProcessPointClouds<pcl::PointXYZ> pointProcessor;
-
-    int maxIterations = 100;
-    float distanceThreshold = 0.6;
-
-    std::pair<pcl::PointCloud<pcl::PointXYZ>::Ptr, pcl::PointCloud<pcl::PointXYZ>::Ptr> segmentCloud = pointProcessor.SegmentPlane(inputPointCloud, maxIterations, distanceThreshold);
-    renderPointCloud(viewer, segmentCloud.first, "obstacleCloud", Color(1,0,0));
-    renderPointCloud(viewer, segmentCloud.second, "planeCloud", Color(0,1,0));
-
-    float distanceTolerance = 0.9;
-    int minClustersize = 30; // needs to have at least this many points to be considered a cluster
-    int maxClustersize = 400;
-
-    std::cout << "Hyperparameter Summery: {Distance Tolerance = " << distanceTolerance << "}, {Min. Cluster Size = " << minClustersize << "}, {Max. Cluster Size = " << maxClustersize << "}" << std::endl;
-
-    std::vector<pcl::PointCloud<pcl::PointXYZ>::Ptr> cloudClusters = pointProcessor.Clustering(segmentCloud.first, distanceTolerance, minClustersize, maxClustersize);
-
-    std::vector<Color> colors = {
-            Color(1,0,0),
-            Color(1,1,0),
-            Color(0,0,1)
-    };
-
-    int clusterId = 0;
-    for(pcl::PointCloud<pcl::PointXYZ>::Ptr cluster : cloudClusters)
-    {
-        unsigned int clusterColor = clusterId % colors.size();
-        Color color = (Color) colors[clusterColor];
-        std::string cloudName = "obstacleCloud_" + std::to_string(clusterId);
-
-        if(renderClusters)
-        {
-            renderPointCloud(viewer, cluster, cloudName, color);
-        }
-
-        if(renderBoundingBoxes)
-        {
-            Box box = pointProcessor.BoundingBox(cluster);
-            renderBox(viewer, box, clusterId);
-        }
-
-        if(renderPCABoundingBoxes)
-        {
-            // With help from these articles/sources:
-            // http://codextechnicanum.blogspot.com/2015/04/find-minimum-oriented-bounding-box-of.html
-            // http://www.pcl-users.org/Finding-oriented-bounding-box-of-a-cloud-td4024616.html
-            // https://en.wikipedia.org/wiki/Minimum_bounding_box
-            // https://en.wikipedia.org/wiki/Principal_component_analysis
-
-            // Compute principal directions
-            Eigen::Vector4f pcaCentroid;
-            pcl::compute3DCentroid(*cluster, pcaCentroid);
-            Eigen::Matrix3f covarianceMatrix;
-            computeCovarianceMatrixNormalized(*cluster, pcaCentroid, covarianceMatrix);
-            Eigen::SelfAdjointEigenSolver<Eigen::Matrix3f> eigenSolver(covarianceMatrix, Eigen::ComputeEigenvectors);
-            Eigen::Matrix3f eigenVectorsPCA = eigenSolver.eigenvectors();
-            eigenVectorsPCA.col(2) = eigenVectorsPCA.col(0).cross(eigenVectorsPCA.col(1));
-            /// This line is necessary for proper orientation in some cases. The numbers come out the same without it, but
-            ///    the signs are different and the box doesn't get correctly oriented in some cases.
-
-            // Transform the original cloud to the origin where the principal components correspond to the axes
-            Eigen::Matrix4f projectionTransform(Eigen::Matrix4f::Identity());
-            projectionTransform.block<3,3>(0,0) = eigenVectorsPCA.transpose();
-            projectionTransform.block<3,1>(0,3) = -1.f * (projectionTransform.block<3,3>(0,0) * pcaCentroid.head<3>());
-            pcl::PointCloud<pcl::PointXYZ>::Ptr cloudPointsProjected (new pcl::PointCloud<pcl::PointXYZ>);
-            pcl::transformPointCloud(*cluster, *cloudPointsProjected, projectionTransform);
-
-            // Get the minimum and maximum points of the transformed cloud
-            pcl::PointXYZ minPoint, maxPoint;
-            pcl::getMinMax3D(*cloudPointsProjected, minPoint, maxPoint);
-            const Eigen::Vector3f meanDiagonal = 0.5f*(maxPoint.getVector3fMap() + minPoint.getVector3fMap());
-
-            // Final transform
-            // Quaternions are a way to do rotations https://www.youtube.com/watch?v=mHVwd8gYLnI
-            const Eigen::Quaternionf bboxQuaternion(eigenVectorsPCA);
-            const Eigen::Vector3f bboxTransform = eigenVectorsPCA * meanDiagonal + pcaCentroid.head<3>();
-
-            // Create the quaternion box structure that allows for rotations
-            BoxQ quaternionBox = BoxQ();
-            quaternionBox.bboxTransform = bboxTransform;
-            quaternionBox.bboxQuaternion = bboxQuaternion;
-            quaternionBox.cube_height = maxPoint.z - minPoint.z;
-            quaternionBox.cube_width = maxPoint.x - minPoint.x;
-            quaternionBox.cube_length = maxPoint.y - minPoint.y;
-
-            renderBox(viewer, quaternionBox, clusterId);
-        }
-        ++clusterId;
-    }
-}
-*/
-
-//setAngle: SWITCH CAMERA ANGLE {XY, TopDown, Side, FPS}
 void initCamera(CameraAngle setAngle, pcl::visualization::PCLVisualizer::Ptr& viewer)
 {
 
@@ -177,15 +49,20 @@ void initCamera(CameraAngle setAngle, pcl::visualization::PCLVisualizer::Ptr& vi
 }
 
 
+/**
+ * Open 3D viewer and display City Block.
+ *
+ * @param viewer the #D Viewer in which the rendering takes place.
+ * @param pointProcessorI
+ * @param inputPointCloud
+ */
 void cityBlock(pcl::visualization::PCLVisualizer::Ptr& viewer,
                ProcessPointClouds<pcl::PointXYZI>* pointProcessorI,
                const pcl::PointCloud<pcl::PointXYZI>::Ptr& inputPointCloud)
 {
-    // ----------------------------------------------------
-    // -----Open 3D viewer and display City Block     -----
-    // ----------------------------------------------------
-
-    constexpr float X{ 30.0 }, Y{ 6.5 }, Z{ 2.5 };
+    constexpr float X = 30.0;
+    constexpr float Y = 6.5;
+    constexpr float Z = 2.5;
 
     pcl::PointCloud<pcl::PointXYZI>::Ptr filterCloud = pointProcessorI->FilterCloud(inputPointCloud,
                                                                                     0.2f,
@@ -196,16 +73,17 @@ void cityBlock(pcl::visualization::PCLVisualizer::Ptr& viewer,
     float distanceThreshold = 0.2;
 
     std::pair<pcl::PointCloud<pcl::PointXYZI>::Ptr, pcl::PointCloud<pcl::PointXYZI>::Ptr> segmentCloud = pointProcessorI->SegmentPlane(filterCloud, maxIterations, distanceThreshold);
-    renderPointCloud(viewer, segmentCloud.first, "obstacleCloud", Color(1,0,0));
-    renderPointCloud(viewer, segmentCloud.second, "planeCloud", Color(0,1,0));
+    pcl::PointCloud<pcl::PointXYZI>::Ptr segmentedObstacleCloud = segmentCloud.first;
+    pcl::PointCloud<pcl::PointXYZI>::Ptr segmentedPlaneCloud = segmentCloud.second;
 
-    float distanceTolerance = 0.5;
-    int minClustersize = 15; // needs to have at least this many points to be considered a cluster
-    int maxClustersize = 400;
+    renderPointCloud(viewer, segmentedObstacleCloud, "obstacleCloud", Color(1, 0, 0));
+    renderPointCloud(viewer, segmentedPlaneCloud, "planeCloud", Color(0,1,0));
 
-    std::cout << "Hyperparameter Summery: {Distance Tolerance = " << distanceTolerance << "}, {Min. Cluster Size = " << minClustersize << "}, {Max. Cluster Size = " << maxClustersize << "}" << std::endl;
-
-    std::vector<pcl::PointCloud<pcl::PointXYZI>::Ptr> cloudClusters = pointProcessorI->Clustering(segmentCloud.first, distanceTolerance, minClustersize, maxClustersize);
+    std::vector<pcl::PointCloud<pcl::PointXYZI>::Ptr> cloudClusters = pointProcessorI->Clustering(
+            segmentedObstacleCloud,
+            CLUSTERING_HYPER_PARAMS.distanceTolerance,
+            CLUSTERING_HYPER_PARAMS.maxClustersize,
+            CLUSTERING_HYPER_PARAMS.maxClustersize);
 
     std::vector<Color> colors = {
             Color(1,0,0),
@@ -220,19 +98,19 @@ void cityBlock(pcl::visualization::PCLVisualizer::Ptr& viewer,
         Color color = (Color) colors[clusterColor];
         std::string cloudName = "obstacleCloud_" + std::to_string(clusterId);
 
-        if(renderClusters)
+        if(RENDER_CLUSTERS)
         {
             //std::cout << "Rendering " << cloudName << " for cluster of size " << cluster->size() << " Color ={" << color.r << color.g << color.b << "}" << std::endl;
             renderPointCloud(viewer, cluster, cloudName, color);
         }
 
-        if(renderBoundingBoxes)
+        if(RENDER_BOUNDING_BOXES)
         {
             Box box = pointProcessorI->BoundingBox(cluster);
             renderBox(viewer, box, clusterId);
         }
 
-        if(renderPCABoundingBoxes)
+        if(RENDER_PCA_BOUNDING_BOXES)
         {
             // With help from these articles/sources:
             // http://codextechnicanum.blogspot.com/2015/04/find-minimum-oriented-bounding-box-of.html
@@ -285,15 +163,19 @@ void cityBlock(pcl::visualization::PCLVisualizer::Ptr& viewer,
 
 int main (int argc, char** argv)
 {
-    std::cout << "starting enviroment" << std::endl;
-
     pcl::visualization::PCLVisualizer::Ptr viewer (new pcl::visualization::PCLVisualizer ("3D Viewer"));
     CameraAngle setAngle = XY;
     initCamera(setAngle, viewer);
-    //simpleHighway(viewer);
 
     ProcessPointClouds<pcl::PointXYZI>* pointProcessorI = new ProcessPointClouds<pcl::PointXYZI>();
-    std::string dataPath = "../src/sensors/data/pcd/data_2";
+    std::string dataRootDir = "../data/sensors/pcd";
+    std::string pcdDataSet = "data_2";
+    std::string dataPath = dataRootDir + "/" + pcdDataSet;
+
+    std::cout << "Starting enviroment for PCD dataset '" << pcdDataSet << "'" << std::endl;
+
+    CLUSTERING_HYPER_PARAMS.printHyperParameters();
+
     std::vector<boost::filesystem::path> stream = pointProcessorI->streamPcd(dataPath);
 
     auto streamIterator = stream.begin();
