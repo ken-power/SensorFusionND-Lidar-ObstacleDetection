@@ -10,8 +10,8 @@
 #include <Eigen/Geometry>
 
 static const bool renderClusters = true;
-static const bool renderBoundingBoxes = false;
-static const bool renderPCABoundingBoxes = true;
+static const bool renderBoundingBoxes = true;
+static const bool renderPCABoundingBoxes = false;
 
 typedef pcl::visualization::PointCloudColorHandlerCustom<pcl::PointXYZI> ColorHandlerXYZ;
 
