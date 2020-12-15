@@ -11,7 +11,7 @@
 
 static const bool renderClusters = true;
 static const bool renderBoundingBoxes = false;
-static const bool renderPCABoundingBoxes = false;
+static const bool renderPCABoundingBoxes = true;
 
 typedef pcl::visualization::PointCloudColorHandlerCustom<pcl::PointXYZI> ColorHandlerXYZ;
 
