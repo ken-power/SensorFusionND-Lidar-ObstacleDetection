@@ -187,17 +187,22 @@ void cityBlock(pcl::visualization::PCLVisualizer::Ptr& viewer)
     std::string pcdFile = "../src/sensors/data/pcd/data_1/0000000000.pcd";
     pcl::PointCloud<pcl::PointXYZI>::Ptr inputPointCloud = pointProcessorI->loadPcd(pcdFile);
 
+    pcl::PointCloud<pcl::PointXYZI>::Ptr filterCloud = pointProcessorI->FilterCloud(inputPointCloud,
+                                                                                    0.2f,
+                                                                                    Eigen::Vector4f(-8, -5, -3,1),
+                                                                                    Eigen::Vector4f(23, 7, 0,1));
+
 
     int maxIterations = 100;
-    float distanceThreshold = 0.6;
+    float distanceThreshold = 0.2;
 
-    std::pair<pcl::PointCloud<pcl::PointXYZI>::Ptr, pcl::PointCloud<pcl::PointXYZI>::Ptr> segmentCloud = pointProcessorI->SegmentPlane(inputPointCloud, maxIterations, distanceThreshold);
+    std::pair<pcl::PointCloud<pcl::PointXYZI>::Ptr, pcl::PointCloud<pcl::PointXYZI>::Ptr> segmentCloud = pointProcessorI->SegmentPlane(filterCloud, maxIterations, distanceThreshold);
     renderPointCloud(viewer, segmentCloud.first, "obstacleCloud", Color(1,0,0));
     renderPointCloud(viewer, segmentCloud.second, "planeCloud", Color(0,1,0));
 
-    float distanceTolerance = 0.9;
-    int minClustersize = 30; // needs to have at least this many points to be considered a cluster
-    int maxClustersize = 400;
+    float distanceTolerance = 0.5;
+    int minClustersize = 10; // needs to have at least this many points to be considered a cluster
+    int maxClustersize = 500;
 
     std::cout << "Hyperparameter Summery: {Distance Tolerance = " << distanceTolerance << "}, {Min. Cluster Size = " << minClustersize << "}, {Max. Cluster Size = " << maxClustersize << "}" << std::endl;
 
@@ -276,8 +281,8 @@ void cityBlock(pcl::visualization::PCLVisualizer::Ptr& viewer)
         ++clusterId;
     }
 
-
-    renderPointCloud(viewer,inputPointCloud,"inputCloud");
+    //renderPointCloud(viewer,inputPointCloud,"inputCloud");
+    renderPointCloud(viewer,filterCloud,"filterCloud");
 }
 
 
