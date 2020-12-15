@@ -187,11 +187,12 @@ void cityBlock(pcl::visualization::PCLVisualizer::Ptr& viewer)
     std::string pcdFile = "../src/sensors/data/pcd/data_1/0000000000.pcd";
     pcl::PointCloud<pcl::PointXYZI>::Ptr inputPointCloud = pointProcessorI->loadPcd(pcdFile);
 
+    constexpr float X{ 30.0 }, Y{ 6.5 }, Z{ 2.5 };
+
     pcl::PointCloud<pcl::PointXYZI>::Ptr filterCloud = pointProcessorI->FilterCloud(inputPointCloud,
                                                                                     0.2f,
-                                                                                    Eigen::Vector4f(-8, -5, -3,1),
-                                                                                    Eigen::Vector4f(23, 7, 0,1));
-
+                                                                                    Eigen::Vector4f(-(X/2), -6, -Z,1),
+                                                                                    Eigen::Vector4f(X, Y, Z,1));
 
     int maxIterations = 100;
     float distanceThreshold = 0.2;
@@ -201,8 +202,8 @@ void cityBlock(pcl::visualization::PCLVisualizer::Ptr& viewer)
     renderPointCloud(viewer, segmentCloud.second, "planeCloud", Color(0,1,0));
 
     float distanceTolerance = 0.5;
-    int minClustersize = 10; // needs to have at least this many points to be considered a cluster
-    int maxClustersize = 500;
+    int minClustersize = 15; // needs to have at least this many points to be considered a cluster
+    int maxClustersize = 400;
 
     std::cout << "Hyperparameter Summery: {Distance Tolerance = " << distanceTolerance << "}, {Min. Cluster Size = " << minClustersize << "}, {Max. Cluster Size = " << maxClustersize << "}" << std::endl;
 
@@ -223,6 +224,7 @@ void cityBlock(pcl::visualization::PCLVisualizer::Ptr& viewer)
 
         if(renderClusters)
         {
+            std::cout << "Rendering " << cloudName << " for cluster of size " << cluster->size() << " Color ={" << color.r << color.g << color.b << "}" << std::endl;
             renderPointCloud(viewer, cluster, cloudName, color);
         }
 
@@ -280,9 +282,6 @@ void cityBlock(pcl::visualization::PCLVisualizer::Ptr& viewer)
         }
         ++clusterId;
     }
-
-    //renderPointCloud(viewer,inputPointCloud,"inputCloud");
-    renderPointCloud(viewer,filterCloud,"filterCloud");
 }
 
 
