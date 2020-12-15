@@ -177,15 +177,13 @@ void initCamera(CameraAngle setAngle, pcl::visualization::PCLVisualizer::Ptr& vi
 }
 
 
-void cityBlock(pcl::visualization::PCLVisualizer::Ptr& viewer)
+void cityBlock(pcl::visualization::PCLVisualizer::Ptr& viewer,
+               ProcessPointClouds<pcl::PointXYZI>* pointProcessorI,
+               const pcl::PointCloud<pcl::PointXYZI>::Ptr& inputPointCloud)
 {
     // ----------------------------------------------------
     // -----Open 3D viewer and display City Block     -----
     // ----------------------------------------------------
-
-    ProcessPointClouds<pcl::PointXYZI>* pointProcessorI = new ProcessPointClouds<pcl::PointXYZI>();
-    std::string pcdFile = "../src/sensors/data/pcd/data_1/0000000000.pcd";
-    pcl::PointCloud<pcl::PointXYZI>::Ptr inputPointCloud = pointProcessorI->loadPcd(pcdFile);
 
     constexpr float X{ 30.0 }, Y{ 6.5 }, Z{ 2.5 };
 
@@ -293,7 +291,12 @@ int main (int argc, char** argv)
     CameraAngle setAngle = XY;
     initCamera(setAngle, viewer);
     //simpleHighway(viewer);
-    cityBlock(viewer);
+
+    ProcessPointClouds<pcl::PointXYZI>* pointProcessorI = new ProcessPointClouds<pcl::PointXYZI>();
+    std::string pcdFile = "../src/sensors/data/pcd/data_1/0000000000.pcd";
+    pcl::PointCloud<pcl::PointXYZI>::Ptr inputPointCloud = pointProcessorI->loadPcd(pcdFile);
+
+    cityBlock(viewer, pointProcessorI, inputPointCloud);
 
     while (!viewer->wasStopped ())
     {
