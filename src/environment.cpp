@@ -1,14 +1,20 @@
 #include "render/render.h"
 #include "processPointClouds.h"
-// using templates for processPointClouds so also include .cpp to help linker
-#include "processPointClouds.cpp"
+#include "processPointClouds.cpp" // using templates for processPointClouds so also include .cpp to help linker
 #include <Eigen/Geometry>
 
 
 // Use these constants to enable/disable various rendering options
 static const bool RENDER_CLUSTERS = true;
-static const bool RENDER_BOUNDING_BOXES = true;
+static const bool RENDER_BOUNDING_BOXES = false;
 static const bool RENDER_PCA_BOUNDING_BOXES = false;
+static const bool USE_CUSTOM_RANSAC = true;
+
+// Use these constants to specify the point cloud dataset to use
+static const std::string DATA_ROOT_DIR = "../data/sensors/pcd";
+static const std::string PCD_DATASET = "data_1";
+static const std::string DATA_PATH = DATA_ROOT_DIR + "/" + PCD_DATASET;
+
 
 static struct ClusteringHyperParameters
 {
@@ -28,7 +34,6 @@ static struct ClusteringHyperParameters
 
 void initCamera(CameraAngle setAngle, pcl::visualization::PCLVisualizer::Ptr& viewer)
 {
-
     viewer->setBackgroundColor (0, 0, 0);
     
     // set camera position and angle
@@ -72,7 +77,15 @@ void cityBlock(pcl::visualization::PCLVisualizer::Ptr& viewer,
     int maxIterations = 100;
     float distanceThreshold = 0.2;
 
-    std::pair<pcl::PointCloud<pcl::PointXYZI>::Ptr, pcl::PointCloud<pcl::PointXYZI>::Ptr> segmentCloud = pointProcessorI->SegmentPlane(filterCloud, maxIterations, distanceThreshold);
+    std::pair<pcl::PointCloud<pcl::PointXYZI>::Ptr, pcl::PointCloud<pcl::PointXYZI>::Ptr> segmentCloud;
+
+    if(USE_CUSTOM_RANSAC) {
+        segmentCloud = pointProcessorI->SegmentPlaneCustomRansac3D(filterCloud, maxIterations, distanceThreshold);
+    }
+    else {
+        segmentCloud = pointProcessorI->SegmentPlane(filterCloud, maxIterations, distanceThreshold);
+    }
+
     pcl::PointCloud<pcl::PointXYZI>::Ptr segmentedObstacleCloud = segmentCloud.first;
     pcl::PointCloud<pcl::PointXYZI>::Ptr segmentedPlaneCloud = segmentCloud.second;
 
@@ -154,29 +167,37 @@ void cityBlock(pcl::visualization::PCLVisualizer::Ptr& viewer,
             quaternionBox.cube_width = maxPoint.x - minPoint.x;
             quaternionBox.cube_length = maxPoint.y - minPoint.y;
 
-            renderBox(viewer, quaternionBox, clusterId);
+            float opacity = 0.8f;
+            renderBox(viewer, quaternionBox, clusterId, color, opacity);
         }
         ++clusterId;
     }
 }
 
 
+void printStartupMessage() {
+    std::cout << "Starting environment for PCD dataset '" << PCD_DATASET << "'" << std::endl;
+
+    if(USE_CUSTOM_RANSAC) {
+        std::cout << "Using Custom implementation of RANSAC 3D algorithm for segmentation" << std::endl;
+    }
+    else {
+        std::cout << "Using PCL version of RANSAC 3D algorithm for segmentation" << std::endl;
+    }
+    CLUSTERING_HYPER_PARAMS.printHyperParameters();
+}
+
 int main (int argc, char** argv)
 {
+    printStartupMessage();
+
     pcl::visualization::PCLVisualizer::Ptr viewer (new pcl::visualization::PCLVisualizer ("3D Viewer"));
     CameraAngle setAngle = XY;
     initCamera(setAngle, viewer);
 
     ProcessPointClouds<pcl::PointXYZI>* pointProcessorI = new ProcessPointClouds<pcl::PointXYZI>();
-    std::string dataRootDir = "../data/sensors/pcd";
-    std::string pcdDataSet = "data_2";
-    std::string dataPath = dataRootDir + "/" + pcdDataSet;
 
-    std::cout << "Starting enviroment for PCD dataset '" << pcdDataSet << "'" << std::endl;
-
-    CLUSTERING_HYPER_PARAMS.printHyperParameters();
-
-    std::vector<boost::filesystem::path> stream = pointProcessorI->streamPcd(dataPath);
+    std::vector<boost::filesystem::path> stream = pointProcessorI->streamPcd(DATA_PATH);
 
     auto streamIterator = stream.begin();
     pcl::PointCloud<pcl::PointXYZI>::Ptr inputCloudI;

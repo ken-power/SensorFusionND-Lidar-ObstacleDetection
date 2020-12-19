@@ -1,6 +1,6 @@
 // PCL lib Functions for processing point clouds
 #include "processPointClouds.h"
-
+#include <unordered_set>
 
 //constructor:
 template<typename PointT>
@@ -136,6 +136,104 @@ std::pair<typename pcl::PointCloud<PointT>::Ptr, typename pcl::PointCloud<PointT
 }
 
 
+/**
+ *
+ * @tparam PointT
+ * @param cloud
+ * @param maxIterations
+ * @param distanceThreshold
+ * @return a pair containing the plane pointcloud and the obstacle pointcloud
+ */
+template<typename PointT>
+std::pair<typename pcl::PointCloud<PointT>::Ptr, typename pcl::PointCloud<PointT>::Ptr> ProcessPointClouds<PointT>::SegmentPlaneCustomRansac3D(typename pcl::PointCloud<PointT>::Ptr cloud, int maxIterations, float distanceThreshold)
+{
+    // Time segmentation process
+    auto startTime = std::chrono::steady_clock::now();
+
+    std::unordered_set<int> inliersResult;  // hold the best inliers
+    srand(time(NULL));
+
+    // For max iterations
+    while(maxIterations--)
+    {
+        // Randomly sample subset and fit line
+        // Randomly pick two points
+        std::unordered_set<int> inliers;
+
+        const int dimensions = 3;
+        while(inliers.size() < dimensions)
+            inliers.insert(rand() % (cloud->points.size()));
+
+        auto iterator = inliers.begin();
+
+        pcl::PointXYZI p1 = cloud->points[*iterator];
+        float x1 = p1.x;
+        float y1 = p1.y;
+        float z1 = p1.z;
+
+        iterator++;
+        pcl::PointXYZI p2 = cloud->points[*iterator];
+        float x2 = p2.x;
+        float y2 = p2.y;
+        float z2 = p2.z;
+
+        iterator++;
+        pcl::PointXYZI p3 =  cloud->points[*iterator];
+        float x3 = p3.x;
+        float y3 = p3.y;
+        float z3 = p3.z;
+
+        float A = (y2-y1)*(z3-z1) - (z2-z1)*(y3-y1);
+        float B = (z2-z1)*(x3-x1) - (x2-x1)*(z3-z1);
+        float C = (x2-x1)*(y3-y1) - (y2-y1)*(x3-x1);
+        float D = -(A*x1 + B*y1 + C*z1);
+
+        // Measure distance between every point and fitted line
+        for(int index=0; index < cloud->points.size(); index++)
+        {
+            if(inliers.count(index)>0)
+                continue;
+
+            pcl::PointXYZI point = cloud->points[index];
+            float x = point.x;
+            float y = point.y;
+            float z = point.z;
+
+            float distance = fabs(A*x + B*y + C*z + D)/sqrt(A*A + B*B + C*C);
+
+            // If distance is smaller than threshold count it as inlier
+            if(distance <= distanceThreshold)
+            {
+                inliers.insert(index);
+            }
+        }
+
+        if(inliers.size() > inliersResult.size())
+        {
+            inliersResult = inliers;
+        }
+    }
+
+    // Create a PointIndices from the set of integers worked out above
+    pcl::PointIndices::Ptr my_inliers (new pcl::PointIndices);
+    pcl::Indices my_indices;
+
+    std::unordered_set<int>::iterator iter;
+    for(iter = inliersResult.begin(); iter != inliersResult.end(); ++iter) {
+        my_indices.push_back(*iter);
+    }
+    my_inliers->indices = my_indices;
+
+    std::pair<typename pcl::PointCloud<PointT>::Ptr, typename pcl::PointCloud<PointT>::Ptr> segResult = SeparateClouds(my_inliers, cloud);
+
+    auto endTime = std::chrono::steady_clock::now();
+    auto elapsedTime = std::chrono::duration_cast<std::chrono::milliseconds>(endTime - startTime);
+    //std::cout << "plane segmentation took " << elapsedTime.count() << " milliseconds" << std::endl;
+
+    return segResult;
+}
+
+
 template<typename PointT>
 std::vector<typename pcl::PointCloud<PointT>::Ptr> ProcessPointClouds<PointT>::Clustering(typename pcl::PointCloud<PointT>::Ptr cloud, float clusterTolerance, int minSize, int maxSize)
 {
@@ -213,14 +311,12 @@ void ProcessPointClouds<PointT>::savePcd(typename pcl::PointCloud<PointT>::Ptr c
 template<typename PointT>
 typename pcl::PointCloud<PointT>::Ptr ProcessPointClouds<PointT>::loadPcd(std::string file)
 {
-
     typename pcl::PointCloud<PointT>::Ptr cloud (new pcl::PointCloud<PointT>);
 
     if (pcl::io::loadPCDFile<PointT> (file, *cloud) == -1) //* load the file
     {
         PCL_ERROR ("Couldn't read file \n");
     }
-    std::cerr << "Loaded " << cloud->points.size () << " data points from " + file << std::endl;
 
     return cloud;
 }
@@ -229,12 +325,10 @@ typename pcl::PointCloud<PointT>::Ptr ProcessPointClouds<PointT>::loadPcd(std::s
 template<typename PointT>
 std::vector<boost::filesystem::path> ProcessPointClouds<PointT>::streamPcd(std::string dataPath)
 {
-
     std::vector<boost::filesystem::path> paths(boost::filesystem::directory_iterator{dataPath}, boost::filesystem::directory_iterator{});
 
     // sort files in accending order so playback is chronological
     sort(paths.begin(), paths.end());
 
     return paths;
-
 }
