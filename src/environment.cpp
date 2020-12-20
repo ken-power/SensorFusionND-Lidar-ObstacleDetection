@@ -6,7 +6,7 @@
 
 // Use these constants to enable/disable various rendering options
 static const bool RENDER_CLUSTERS = true;
-static const bool RENDER_BOUNDING_BOXES = false;
+static const bool RENDER_BOUNDING_BOXES = true;
 static const bool RENDER_PCA_BOUNDING_BOXES = false;
 static const bool USE_CUSTOM_RANSAC = true;
 
@@ -20,7 +20,7 @@ static struct ClusteringHyperParameters
 {
     const float distanceTolerance = 0.5;
     const int minClustersize = 15; // needs to have at least this many points to be considered a cluster
-    const int maxClustersize = 400;
+    const int maxClustersize = 550;
 
     void printHyperParameters() {
         std::cout << "Hyperparameter Summery: "
@@ -95,7 +95,7 @@ void cityBlock(pcl::visualization::PCLVisualizer::Ptr& viewer,
     std::vector<pcl::PointCloud<pcl::PointXYZI>::Ptr> cloudClusters = pointProcessorI->Clustering(
             segmentedObstacleCloud,
             CLUSTERING_HYPER_PARAMS.distanceTolerance,
-            CLUSTERING_HYPER_PARAMS.maxClustersize,
+            CLUSTERING_HYPER_PARAMS.minClustersize,
             CLUSTERING_HYPER_PARAMS.maxClustersize);
 
     std::vector<Color> colors = {
@@ -113,12 +113,12 @@ void cityBlock(pcl::visualization::PCLVisualizer::Ptr& viewer,
 
         if(RENDER_CLUSTERS)
         {
-            //std::cout << "Rendering " << cloudName << " for cluster of size " << cluster->size() << " Color ={" << color.r << color.g << color.b << "}" << std::endl;
             renderPointCloud(viewer, cluster, cloudName, color);
         }
 
         if(RENDER_BOUNDING_BOXES)
         {
+            //std::cout << "Rendering Bounding Box " << cloudName << " for cluster of size " << cluster->size() << " Color ={" << color.r << color.g << color.b << "}" << std::endl;
             Box box = pointProcessorI->BoundingBox(cluster);
             renderBox(viewer, box, clusterId);
         }
