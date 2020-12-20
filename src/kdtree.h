@@ -1,5 +1,8 @@
 // implementing kd tree
 
+#ifndef CUSTOM_KDTREE_H_
+#define CUSTOM_KDTREE_H_
+
 #include "render/render.h"
 
 // Structure to represent node of a KD-tree
@@ -103,5 +106,6 @@ struct KdTree
 };
 
 
+#endif /* CUSTOM_KDTREE_H_ */
 
 
