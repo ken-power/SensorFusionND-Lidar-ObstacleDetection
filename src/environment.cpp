@@ -9,6 +9,7 @@ static const bool RENDER_CLUSTERS = true;
 static const bool RENDER_BOUNDING_BOXES = true;
 static const bool RENDER_PCA_BOUNDING_BOXES = false;
 static const bool USE_CUSTOM_RANSAC = true;
+static const bool USE_CUSTOM_EUCLIDEAN_CLUSTERING = false;
 
 // Use these constants to specify the point cloud dataset to use
 static const std::string DATA_ROOT_DIR = "../data/sensors/pcd";
@@ -92,11 +93,21 @@ void cityBlock(pcl::visualization::PCLVisualizer::Ptr& viewer,
     renderPointCloud(viewer, segmentedObstacleCloud, "obstacleCloud", Color(1, 0, 0));
     renderPointCloud(viewer, segmentedPlaneCloud, "planeCloud", Color(0,1,0));
 
-    std::vector<pcl::PointCloud<pcl::PointXYZI>::Ptr> cloudClusters = pointProcessorI->Clustering(
-            segmentedObstacleCloud,
-            CLUSTERING_HYPER_PARAMS.distanceTolerance,
-            CLUSTERING_HYPER_PARAMS.minClustersize,
-            CLUSTERING_HYPER_PARAMS.maxClustersize);
+    std::vector<pcl::PointCloud<pcl::PointXYZI>::Ptr> cloudClusters;
+    if(USE_CUSTOM_EUCLIDEAN_CLUSTERING) {
+        cloudClusters = pointProcessorI->EuclideanClustering(
+                segmentedObstacleCloud,
+                CLUSTERING_HYPER_PARAMS.distanceTolerance,
+                CLUSTERING_HYPER_PARAMS.minClustersize,
+                CLUSTERING_HYPER_PARAMS.maxClustersize);
+    }
+    else {
+        cloudClusters = pointProcessorI->Clustering(
+                segmentedObstacleCloud,
+                CLUSTERING_HYPER_PARAMS.distanceTolerance,
+                CLUSTERING_HYPER_PARAMS.minClustersize,
+                CLUSTERING_HYPER_PARAMS.maxClustersize);
+    }
 
     std::vector<Color> colors = {
             Color(1,0,0),
