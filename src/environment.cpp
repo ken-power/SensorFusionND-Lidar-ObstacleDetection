@@ -19,15 +19,18 @@ static const std::string DATA_PATH = DATA_ROOT_DIR + "/" + PCD_DATASET;
 
 static struct ClusteringHyperParameters
 {
-    const float distanceTolerance = 0.5;
-    const int minClustersize = 15; // needs to have at least this many points to be considered a cluster
-    const int maxClustersize = 550;
+    const float distanceTolerance = 0.2;
+    const int minClusterSize = 18; // needs to have at least this many points to be considered a cluster
+    const int maxClusterSize = 550;
+    const int maxIterations = 100;
+
 
     void printHyperParameters() {
         std::cout << "Hyperparameter Summery: "
-                  << "{Distance Tolerance = " << distanceTolerance
-                  << "}, {Min. Cluster Size = " << minClustersize
-                  << "}, {Max. Cluster Size = " << maxClustersize << "}"
+                  << "{Max. Iterations = " << maxIterations << "}, "
+                  << "{Distance Tolerance = " << distanceTolerance << "}, "
+                  << "{Min. Cluster Size = " << minClusterSize << "}, "
+                  << "{Max. Cluster Size = " << maxClusterSize << "}"
                   << std::endl;
     }
 } CLUSTERING_HYPER_PARAMS;
@@ -75,16 +78,17 @@ void cityBlock(pcl::visualization::PCLVisualizer::Ptr& viewer,
                                                                                     Eigen::Vector4f(-(X/2), -6, -Z,1),
                                                                                     Eigen::Vector4f(X, Y, Z,1));
 
-    int maxIterations = 100;
-    float distanceThreshold = 0.2;
-
     std::pair<pcl::PointCloud<pcl::PointXYZI>::Ptr, pcl::PointCloud<pcl::PointXYZI>::Ptr> segmentCloud;
 
     if(USE_CUSTOM_RANSAC) {
-        segmentCloud = pointProcessorI->SegmentPlaneCustomRansac3D(filterCloud, maxIterations, distanceThreshold);
+        segmentCloud = pointProcessorI->SegmentPlaneCustomRansac3D(filterCloud,
+                                                                   CLUSTERING_HYPER_PARAMS.maxIterations,
+                                                                   CLUSTERING_HYPER_PARAMS.distanceTolerance);
     }
     else {
-        segmentCloud = pointProcessorI->SegmentPlane(filterCloud, maxIterations, distanceThreshold);
+        segmentCloud = pointProcessorI->SegmentPlane(filterCloud,
+                                                     CLUSTERING_HYPER_PARAMS.maxIterations,
+                                                     CLUSTERING_HYPER_PARAMS.distanceTolerance);
     }
 
     pcl::PointCloud<pcl::PointXYZI>::Ptr segmentedObstacleCloud = segmentCloud.first;
@@ -98,15 +102,15 @@ void cityBlock(pcl::visualization::PCLVisualizer::Ptr& viewer,
         cloudClusters = pointProcessorI->EuclideanClustering(
                 segmentedObstacleCloud,
                 CLUSTERING_HYPER_PARAMS.distanceTolerance,
-                CLUSTERING_HYPER_PARAMS.minClustersize,
-                CLUSTERING_HYPER_PARAMS.maxClustersize);
+                CLUSTERING_HYPER_PARAMS.minClusterSize,
+                CLUSTERING_HYPER_PARAMS.maxClusterSize);
     }
     else {
         cloudClusters = pointProcessorI->Clustering(
                 segmentedObstacleCloud,
                 CLUSTERING_HYPER_PARAMS.distanceTolerance,
-                CLUSTERING_HYPER_PARAMS.minClustersize,
-                CLUSTERING_HYPER_PARAMS.maxClustersize);
+                CLUSTERING_HYPER_PARAMS.minClusterSize,
+                CLUSTERING_HYPER_PARAMS.maxClusterSize);
     }
 
     std::vector<Color> colors = {
