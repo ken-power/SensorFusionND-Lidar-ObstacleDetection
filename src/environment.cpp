@@ -3,11 +3,12 @@
 #include "processPointClouds.cpp" // using templates for processPointClouds so also include .cpp to help linker
 #include <Eigen/Geometry>
 
-
 // Use these constants to enable/disable various rendering options
 static const bool RENDER_CLUSTERS = true;
 static const bool RENDER_BOUNDING_BOXES = true;
 static const bool RENDER_PCA_BOUNDING_BOXES = false;
+
+// For testing purposes, set these to false to use the PCL versions of RANSAC and Euclidean Clustering, respectively.
 static const bool USE_CUSTOM_RANSAC = true;
 static const bool USE_CUSTOM_EUCLIDEAN_CLUSTERING = true;
 
