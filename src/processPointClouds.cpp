@@ -12,13 +12,6 @@ ProcessPointClouds<PointT>::ProcessPointClouds() {}
 template<typename PointT>
 ProcessPointClouds<PointT>::~ProcessPointClouds() {}
 
-
-template<typename PointT>
-void ProcessPointClouds<PointT>::numPoints(typename pcl::PointCloud<PointT>::Ptr cloud)
-{
-    std::cout << cloud->points.size() << std::endl;
-}
-
 /**
  * Perform voxel grid point reduction and region based filtering
  * minPoint and maxPoint define the region space

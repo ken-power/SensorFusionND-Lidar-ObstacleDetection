@@ -1,4 +1,4 @@
-// PCL lib Functions for processing point clouds 
+// PCL library Functions for processing point clouds
 
 #ifndef PROCESSPOINTCLOUDS_H_
 #define PROCESSPOINTCLOUDS_H_
@@ -28,8 +28,6 @@ public:
     ProcessPointClouds();
     //deconstructor
     ~ProcessPointClouds();
-
-    void numPoints(typename pcl::PointCloud<PointT>::Ptr cloud);
 
     typename pcl::PointCloud<PointT>::Ptr FilterCloud(typename pcl::PointCloud<PointT>::Ptr cloud, float voxelGridCellSize, Eigen::Vector4f minPoint, Eigen::Vector4f maxPoint);
 
