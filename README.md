@@ -1,6 +1,8 @@
 # Sensor Fusion: Using LIDAR for Object Detection
 Ken Power, December 2020
 
+# Project Goal
+
 The goal of this project is to use Lidar to detect traffic, including cars and trucks, and other obstacles (e.g., poles, traffic signs) on a narrow street. The detection pipeline implements filtering, segmentation, clustering, and bounding boxes. Also the segmentation and clustering methods are created from scratch, rather than using PCL's built-in functions. The code places bounding boxes around all obstacles on the road.
 
 The finished result is shown in the animated GIF below, with a reference image on the left and my implementation on the right. 
@@ -13,6 +15,15 @@ Reference Implementation | My Implementation
 Looking at the output from another angle:
 
 ![](media/Final_DataSet1_TopDiagonalView.gif)
+
+# Project Specification
+
+CRITERIA | SPECIFICATIONS | STATUS
+--- | --- | ---
+Bounding boxes enclose appropriate objects. | Bounding boxes enclose vehicles, and the pole on the right side of the vehicle. There is one box per detected object. | Done
+Objects are consistently detected across frames in the video. | Most bounding boxes can be followed through the lidar stream, and major objects don't lose or gain bounding boxes in the middle of the lidar stream. | Done
+Segmentation is implemented in the project. | The code used for segmentation uses custom 3D RANSAC algorithm developed from scratch. | Done
+Clustering is implemented in the project. | The code used for clustering uses the Euclidean clustering algorithm along with the KD-Tree developed from scratch. | Done
 
 
 # Running the program
@@ -60,3 +71,5 @@ The [data/sensors/pcd folder](./data/sensors/pcd) contains a set of Point Cloud 
 ## Media files
 
 The [media folder](./media) contains examples of output files, including the GIFs, recorded from running this project.
+
+
