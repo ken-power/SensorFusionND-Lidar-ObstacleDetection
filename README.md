@@ -1,7 +1,7 @@
 # Sensor Fusion: Using LIDAR for Object Detection
 Ken Power, December 2020
 
-The goal of this project is to use Lidar to detect car and trucks on a narrow street. The detection pipeline implements filtering, segmentation, clustering, and bounding boxes. Also the segmentation and clustering methods are created from scratch, rather than using PCL's built-in functions. The code places bounding boxes around all obstacles on the road.
+The goal of this project is to use Lidar to detect traffic, including cars and trucks, and other obstacles (e.g., poles, traffic signs) on a narrow street. The detection pipeline implements filtering, segmentation, clustering, and bounding boxes. Also the segmentation and clustering methods are created from scratch, rather than using PCL's built-in functions. The code places bounding boxes around all obstacles on the road.
 
 The finished result is shown in the animated GIF below, with a reference image on the left and my implementation on the right. 
 
