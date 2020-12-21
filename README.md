@@ -34,18 +34,19 @@ These are the hyperparamter values that I arrived at after experimenting with di
 
 ## Source files
 
-* `environment.cpp`: This is the starging point, and contains the `main()` function. This is also the place where the hyperparameters are defined.
+* `environment.cpp`: This is the entry point, and contains the `main()` function. This is also the place where the hyperparameters are defined.
 * `processPointClouds.h, processPointClouds.cpp`: Class that encapsulates PCL library Functions for processing point clouds. The function `ProcessPointClouds<PointT>::SegmentPlaneCustomRansac3D()` contains a custom implementation of the RANSAC algorithm for segmentation. 
-* `kdtree.h`: A custom implementation of a KD-Tree.
+* `kdtree.h`: A custom implementation of a KD-Tree. The function `ProcessPointClouds<PointT>::EuclideanClustering()` uses the custom KDTree to implement Euclidean Clustering. 
 * `render/box.h`: Structures for creating bounding boxes.
 * `render/render.h, render.cpp`: Code that uses the PCL library to render point clouds and bounding boxes.
 
 ## Build files
+
 * `CMakeLists.txt`: A [CMake file](https://cmake.org/cmake/help/latest/guide/tutorial/index.html) containing the set of directives and instructions describing the project's source files and targets (executable, in this case). This creates a `make` file.
 
 ## Point Cloud Data files
-The [data/sensors/pcd folder](./data/sensors/pcd) contains a set of Point Cloud data files.
 
+The [data/sensors/pcd folder](./data/sensors/pcd) contains a set of Point Cloud data files.
 
 ## Media files
 
