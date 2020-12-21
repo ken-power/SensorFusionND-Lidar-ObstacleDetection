@@ -18,6 +18,7 @@
 #include <ctime>
 #include <chrono>
 #include "render/box.h"
+#include "kdtree.h"
 
 template<typename PointT>
 class ProcessPointClouds {
@@ -40,8 +41,6 @@ public:
 
     std::vector<typename pcl::PointCloud<PointT>::Ptr> Clustering(typename pcl::PointCloud<PointT>::Ptr cloud, float clusterTolerance, int minSize, int maxSize);
 
-    std::vector<typename pcl::PointCloud<PointT>::Ptr> EuclideanClustering(typename pcl::PointCloud<PointT>::Ptr cloud, float clusterTolerance, int minSize, int maxSize);
-
     Box BoundingBox(typename pcl::PointCloud<PointT>::Ptr cluster);
 
     void savePcd(typename pcl::PointCloud<PointT>::Ptr cloud, std::string file);
@@ -49,6 +48,28 @@ public:
     typename pcl::PointCloud<PointT>::Ptr loadPcd(std::string file);
 
     std::vector<boost::filesystem::path> streamPcd(std::string dataPath);
-  
+
+    std::vector<typename pcl::PointCloud<PointT>::Ptr> EuclideanClustering(typename pcl::PointCloud<PointT>::Ptr cloud,
+                                                                           float distanceTolerance,
+                                                                           int minClusterSize,
+                                                                           int maxClusterSize);
+
+private:
+    std::vector<std::vector<int>> EuclideanClusterIndices(typename pcl::PointCloud<PointT>::Ptr cloud,
+                                                          typename KdTree<PointT>::KdTree* tree,
+                                                          float distanceTolerance,
+                                                          int minClusterSize,
+                                                          int maxClusterSize);
+
+    void clusterHelper(int pointID,
+                       typename pcl::PointCloud<PointT>::Ptr cloud,
+                       std::vector<int>& cluster,
+                       std::vector<bool>& processed,
+                       typename KdTree<PointT>::KdTree* tree,
+                       float distanceTolerance,
+                       int maxClusterSize);
+
+
 };
+
 #endif /* PROCESSPOINTCLOUDS_H_ */

@@ -9,7 +9,7 @@ static const bool RENDER_CLUSTERS = true;
 static const bool RENDER_BOUNDING_BOXES = true;
 static const bool RENDER_PCA_BOUNDING_BOXES = false;
 static const bool USE_CUSTOM_RANSAC = true;
-static const bool USE_CUSTOM_EUCLIDEAN_CLUSTERING = false;
+static const bool USE_CUSTOM_EUCLIDEAN_CLUSTERING = true;
 
 // Use these constants to specify the point cloud dataset to use
 static const std::string DATA_ROOT_DIR = "../data/sensors/pcd";
@@ -190,13 +190,20 @@ void printStartupMessage() {
     std::cout << "Starting environment for PCD dataset '" << PCD_DATASET << "'" << std::endl;
 
     if(USE_CUSTOM_RANSAC) {
-        std::cout << "Using Custom implementation of RANSAC 3D algorithm for segmentation" << std::endl;
+        std::cout << "Using custom implementation of RANSAC 3D algorithm for segmentation" << std::endl;
     }
     else {
         std::cout << "Using PCL version of RANSAC 3D algorithm for segmentation" << std::endl;
     }
+    if(USE_CUSTOM_EUCLIDEAN_CLUSTERING) {
+        std::cout << "Using custom implementation of Euclidean Clustering algorithm along with custom KD-Tree" << std::endl;
+    }
+    else {
+        std::cout << "Using PCL version of clustering and KDtree" << std::endl;
+    }
     CLUSTERING_HYPER_PARAMS.printHyperParameters();
 }
+
 
 int main (int argc, char** argv)
 {
