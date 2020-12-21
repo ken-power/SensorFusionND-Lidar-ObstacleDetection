@@ -30,6 +30,15 @@ These are the hyperparamter values that I arrived at after experimenting with di
 * Min. Cluster Size = 18
 * Max. Cluster Size = 550
 
+There are two flags in the `environment.cpp` file that can be used to specify whether the code uses the custom implementaitons of RANSAC and Euclidean Clustering with KD-Tree, or the PCL versions.
+
+```c++
+static const bool USE_CUSTOM_RANSAC = true;
+static const bool USE_CUSTOM_EUCLIDEAN_CLUSTERING = true;
+```
+
+Set these to `true` to use the custom versions, and `false` to use the PCL versions. They are set to `true` by default.
+
 # Project Files
 
 ## Source files
