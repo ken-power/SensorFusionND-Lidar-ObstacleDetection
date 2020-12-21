@@ -137,14 +137,6 @@ std::pair<typename pcl::PointCloud<PointT>::Ptr, typename pcl::PointCloud<PointT
 }
 
 
-/**
- *
- * @tparam PointT
- * @param cloud
- * @param maxIterations
- * @param distanceThreshold
- * @return a pair containing the plane pointcloud and the obstacle pointcloud
- */
 template<typename PointT>
 std::pair<typename pcl::PointCloud<PointT>::Ptr, typename pcl::PointCloud<PointT>::Ptr> ProcessPointClouds<PointT>::SegmentPlaneCustomRansac3D(typename pcl::PointCloud<PointT>::Ptr cloud, int maxIterations, float distanceThreshold)
 {
