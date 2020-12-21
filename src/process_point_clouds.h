@@ -18,7 +18,7 @@
 #include <ctime>
 #include <chrono>
 #include "render/box.h"
-#include "kdtree.h"
+#include "kd_tree.h"
 
 template<typename PointT>
 class ProcessPointClouds {

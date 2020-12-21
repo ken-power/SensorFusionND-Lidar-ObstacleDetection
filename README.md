@@ -44,8 +44,8 @@ Set these to `true` to use the custom versions, and `false` to use the PCL versi
 ## Source files
 
 * `environment.cpp`: This is the entry point, and contains the `main()` function. This is also the place where the hyperparameters are defined.
-* `processPointClouds.h, processPointClouds.cpp`: Class that encapsulates PCL library Functions for processing point clouds. The function `ProcessPointClouds<PointT>::SegmentPlaneCustomRansac3D()` contains a custom implementation of the RANSAC algorithm for segmentation. 
-* `kdtree.h`: A custom implementation of a KD-Tree. The function `ProcessPointClouds<PointT>::EuclideanClustering()` uses the custom KDTree to implement Euclidean Clustering. 
+* `process_point_clouds.h, process_point_clouds.cpp`: Class that encapsulates PCL library Functions for processing point clouds. The function `ProcessPointClouds<PointT>::SegmentPlaneCustomRansac3D()` contains a custom implementation of the RANSAC algorithm for segmentation. 
+* `kd_tree.h`: A custom implementation of a KD-Tree. The function `ProcessPointClouds<PointT>::EuclideanClustering()` uses the custom KDTree to implement Euclidean Clustering. 
 * `render/box.h`: Structures for creating bounding boxes.
 * `render/render.h, render.cpp`: Code that uses the PCL library to render point clouds and bounding boxes.
 

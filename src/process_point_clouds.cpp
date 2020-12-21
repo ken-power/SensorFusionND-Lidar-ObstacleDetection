@@ -1,7 +1,7 @@
 // PCL lib Functions for processing point clouds
-#include "processPointClouds.h"
+#include "process_point_clouds.h"
 #include <unordered_set>
-#include "kdtree.h"
+#include "kd_tree.h"
 
 //constructor:
 template<typename PointT>

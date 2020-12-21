@@ -1,6 +1,6 @@
 #include "render/render.h"
-#include "processPointClouds.h"
-#include "processPointClouds.cpp" // using templates for processPointClouds so also include .cpp to help linker
+#include "process_point_clouds.h"
+#include "process_point_clouds.cpp" // using templates for processPointClouds so also include .cpp to help linker
 #include <Eigen/Geometry>
 
 // Use these constants to enable/disable various rendering options
