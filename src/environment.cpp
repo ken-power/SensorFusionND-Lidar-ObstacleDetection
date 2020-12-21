@@ -1,7 +1,8 @@
+#include <Eigen/Geometry>
+
 #include "render/render.h"
 #include "process_point_clouds.h"
 #include "process_point_clouds.cpp" // using templates for processPointClouds so also include .cpp to help linker
-#include <Eigen/Geometry>
 
 // Use these constants to enable/disable various rendering options
 static const bool RENDER_CLUSTERS = true;
@@ -37,7 +38,7 @@ static struct ClusteringHyperParameters
 } CLUSTERING_HYPER_PARAMS;
 
 
-void initCamera(CameraAngle setAngle, pcl::visualization::PCLVisualizer::Ptr& viewer)
+void InitializeCamera(CameraAngle setAngle, pcl::visualization::PCLVisualizer::Ptr& viewer)
 {
     viewer->setBackgroundColor (0, 0, 0);
     
@@ -66,7 +67,7 @@ void initCamera(CameraAngle setAngle, pcl::visualization::PCLVisualizer::Ptr& vi
  * @param pointProcessorI
  * @param inputPointCloud
  */
-void cityBlock(pcl::visualization::PCLVisualizer::Ptr& viewer,
+void CityBlock(pcl::visualization::PCLVisualizer::Ptr& viewer,
                ProcessPointClouds<pcl::PointXYZI>* pointProcessorI,
                const pcl::PointCloud<pcl::PointXYZI>::Ptr& inputPointCloud)
 {
@@ -95,8 +96,8 @@ void cityBlock(pcl::visualization::PCLVisualizer::Ptr& viewer,
     pcl::PointCloud<pcl::PointXYZI>::Ptr segmentedObstacleCloud = segmentCloud.first;
     pcl::PointCloud<pcl::PointXYZI>::Ptr segmentedPlaneCloud = segmentCloud.second;
 
-    renderPointCloud(viewer, segmentedObstacleCloud, "obstacleCloud", Color(1, 0, 0));
-    renderPointCloud(viewer, segmentedPlaneCloud, "planeCloud", Color(0,1,0));
+    RenderPointCloud(viewer, segmentedObstacleCloud, "obstacleCloud", Color(1, 0, 0));
+    RenderPointCloud(viewer, segmentedPlaneCloud, "planeCloud", Color(0, 1, 0));
 
     std::vector<pcl::PointCloud<pcl::PointXYZI>::Ptr> cloudClusters;
     if(USE_CUSTOM_EUCLIDEAN_CLUSTERING) {
@@ -129,14 +130,14 @@ void cityBlock(pcl::visualization::PCLVisualizer::Ptr& viewer,
 
         if(RENDER_CLUSTERS)
         {
-            renderPointCloud(viewer, cluster, cloudName, color);
+            RenderPointCloud(viewer, cluster, cloudName, color);
         }
 
         if(RENDER_BOUNDING_BOXES)
         {
             //std::cout << "Rendering Bounding Box " << cloudName << " for cluster of size " << cluster->size() << " Color ={" << color.r << color.g << color.b << "}" << std::endl;
             Box box = pointProcessorI->BoundingBox(cluster);
-            renderBox(viewer, box, clusterId);
+            RenderBox(viewer, box, clusterId);
         }
 
         if(RENDER_PCA_BOUNDING_BOXES)
@@ -184,14 +185,14 @@ void cityBlock(pcl::visualization::PCLVisualizer::Ptr& viewer,
             quaternionBox.cube_length = maxPoint.y - minPoint.y;
 
             float opacity = 0.8f;
-            renderBox(viewer, quaternionBox, clusterId, color, opacity);
+            RenderBox(viewer, quaternionBox, clusterId, color, opacity);
         }
         ++clusterId;
     }
 }
 
 
-void printStartupMessage() {
+void PrintStartupMessages() {
     std::cout << "Starting environment for PCD dataset '" << PCD_DATASET << "'" << std::endl;
 
     if(USE_CUSTOM_RANSAC) {
@@ -212,15 +213,15 @@ void printStartupMessage() {
 
 int main (int argc, char** argv)
 {
-    printStartupMessage();
+    PrintStartupMessages();
 
     pcl::visualization::PCLVisualizer::Ptr viewer (new pcl::visualization::PCLVisualizer ("3D Viewer"));
     CameraAngle setAngle = XY;
-    initCamera(setAngle, viewer);
+    InitializeCamera(setAngle, viewer);
 
     ProcessPointClouds<pcl::PointXYZI>* pointProcessorI = new ProcessPointClouds<pcl::PointXYZI>();
 
-    std::vector<boost::filesystem::path> stream = pointProcessorI->streamPcd(DATA_PATH);
+    std::vector<boost::filesystem::path> stream = pointProcessorI->StreamPcd(DATA_PATH);
 
     auto streamIterator = stream.begin();
     pcl::PointCloud<pcl::PointXYZI>::Ptr inputCloudI;
@@ -234,8 +235,8 @@ int main (int argc, char** argv)
         //std::cout << "Frame Rate = " << viewer->getFPS() << " fps" << std::endl;
 
         // Load PCD and run obstacle detection process
-        inputCloudI = pointProcessorI->loadPcd((*streamIterator).string());
-        cityBlock(viewer, pointProcessorI, inputCloudI);
+        inputCloudI = pointProcessorI->LoadPcd((*streamIterator).string());
+        CityBlock(viewer, pointProcessorI, inputCloudI);
 
         streamIterator++;
         if(streamIterator == stream.end())

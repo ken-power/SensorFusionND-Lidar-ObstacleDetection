@@ -1,5 +1,3 @@
-// implementing kd tree
-
 #ifndef CUSTOM_KDTREE_H_
 #define CUSTOM_KDTREE_H_
 
@@ -19,6 +17,7 @@ struct Node
 };
 
 
+// Implementing the KD-Tree
 template <typename PointT>
 struct KdTree
 {
@@ -26,19 +25,19 @@ struct KdTree
 	: root(NULL)
 	{}
 
-    void insert(typename pcl::PointCloud<PointT>::Ptr cloud)
+    void Insert(typename pcl::PointCloud<PointT>::Ptr cloud)
     {
         for(unsigned int id =0 ; id < cloud->points.size(); id++){
-            insertHelper(&root, 0, cloud->points[id], id);
+            InsertHelper(&root, 0, cloud->points[id], id);
         }
     }
 
 
     // return a list of point ids in the tree that are within distance of target
-    std::vector<int> search(PointT target, float distanceTolerance)
+    std::vector<int> Search(PointT target, float distanceTolerance)
     {
         std::vector<int> ids;
-        searchHelper(target, root, 0, distanceTolerance, ids);
+        SearchHelper(target, root, 0, distanceTolerance, ids);
 
         return ids;
     }
@@ -46,7 +45,7 @@ struct KdTree
 
 private:
 
-    void insertHelper(Node** node, uint depth, PointT point, int id)
+    void InsertHelper(Node** node, uint depth, PointT point, int id)
     {
 	    std::string location = "";
 
@@ -63,12 +62,12 @@ private:
 
 	        if(point.data[dimension] < ((*node)->point[dimension]))
             {
-	            insertHelper(&((*node)->left), depth+1, point, id);
+                InsertHelper(&((*node)->left), depth + 1, point, id);
                 location = "left";
             }
 	        else
             {
-                insertHelper(&((*node)->right), depth+1, point, id);
+                InsertHelper(&((*node)->right), depth + 1, point, id);
                 location = "right";
             }
         }
@@ -77,7 +76,7 @@ private:
     }
 
 
-    void searchHelper(PointT target, Node* node, int depth, float distanceTolerance, std::vector<int>& ids)
+    void SearchHelper(PointT target, Node* node, int depth, float distanceTolerance, std::vector<int>& ids)
     {
         if(node!=NULL)
         {
@@ -100,11 +99,11 @@ private:
             // check across boundary to determine if we flow to the left or right
             if((target.data[depth%2] - distanceTolerance) < node->point[depth%2])
             {
-                searchHelper(target, node->left, depth+1, distanceTolerance, ids);
+                SearchHelper(target, node->left, depth + 1, distanceTolerance, ids);
             }
             if((target.data[depth%2] + distanceTolerance) > node->point[depth%2])
             {
-                searchHelper(target, node->right, depth+1, distanceTolerance, ids);
+                SearchHelper(target, node->right, depth + 1, distanceTolerance, ids);
             }
         }
     }

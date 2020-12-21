@@ -1,6 +1,6 @@
 #include "render.h"
 
-void renderPointCloud(pcl::visualization::PCLVisualizer::Ptr& viewer, const pcl::PointCloud<pcl::PointXYZI>::Ptr& cloud, std::string name, Color color)
+void RenderPointCloud(pcl::visualization::PCLVisualizer::Ptr& viewer, const pcl::PointCloud<pcl::PointXYZI>::Ptr& cloud, std::string name, Color color)
 {
 	if(color.r==-1)
 	{
@@ -19,7 +19,7 @@ void renderPointCloud(pcl::visualization::PCLVisualizer::Ptr& viewer, const pcl:
 }
 
 // Draw wire frame box with filled transparent color 
-void renderBox(pcl::visualization::PCLVisualizer::Ptr& viewer, Box box, int id, Color color, float opacity)
+void RenderBox(pcl::visualization::PCLVisualizer::Ptr& viewer, Box box, int id, Color color, float opacity)
 {
 	if(opacity > 1.0)
 		opacity = 1.0;
@@ -41,7 +41,7 @@ void renderBox(pcl::visualization::PCLVisualizer::Ptr& viewer, Box box, int id, 
     viewer->setShapeRenderingProperties(pcl::visualization::PCL_VISUALIZER_OPACITY, opacity*0.3, cubeFill);
 }
 
-void renderBox(pcl::visualization::PCLVisualizer::Ptr& viewer, BoxQ box, int id, Color color, float opacity)
+void RenderBox(pcl::visualization::PCLVisualizer::Ptr& viewer, BoxQ box, int id, Color color, float opacity)
 {
 	if(opacity > 1.0)
 		opacity = 1.0;

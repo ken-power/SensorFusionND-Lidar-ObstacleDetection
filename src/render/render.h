@@ -1,17 +1,20 @@
 #ifndef RENDER_H
 #define RENDER_H
-#include <pcl/visualization/pcl_visualizer.h>
-#include "box.h"
+
 #include <iostream>
 #include <vector>
 #include <string>
+
+#include <pcl/visualization/pcl_visualizer.h>
+
+#include "box.h"
 
 struct Color
 {
 	float r, g, b;
 
-	Color(float setR, float setG, float setB)
-		: r(setR), g(setG), b(setB)
+	Color(float r_value, float g_value, float b_value)
+		: r(r_value), g(g_value), b(b_value)
 	{}
 };
 
@@ -20,8 +23,21 @@ enum CameraAngle
 	XY, TopDown, Side, FPS
 };
 
-void renderPointCloud(pcl::visualization::PCLVisualizer::Ptr& viewer, const pcl::PointCloud<pcl::PointXYZI>::Ptr& cloud, std::string name, Color color = Color(-1,-1,-1));
-void renderBox(pcl::visualization::PCLVisualizer::Ptr& viewer, Box box, int id, Color color = Color(1,0,0), float opacity=1);
-void renderBox(pcl::visualization::PCLVisualizer::Ptr& viewer, BoxQ box, int id, Color color = Color(1,0,0), float opacity=1);
+void RenderPointCloud(pcl::visualization::PCLVisualizer::Ptr& viewer,
+                      const pcl::PointCloud<pcl::PointXYZI>::Ptr& cloud,
+                      std::string name,
+                      Color color = Color(-1, -1, -1));
+
+void RenderBox(pcl::visualization::PCLVisualizer::Ptr& viewer,
+               Box box,
+               int id,
+               Color color = Color(1, 0, 0),
+               float opacity = 1);
+
+void RenderBox(pcl::visualization::PCLVisualizer::Ptr& viewer,
+               BoxQ box,
+               int id,
+               Color color = Color(1, 0, 0),
+               float opacity = 1);
 
 #endif

@@ -1,6 +1,6 @@
-// PCL lib Functions for processing point clouds
-#include "process_point_clouds.h"
 #include <unordered_set>
+
+#include "process_point_clouds.h"
 #include "kd_tree.h"
 
 //constructor:
@@ -8,7 +8,7 @@ template<typename PointT>
 ProcessPointClouds<PointT>::ProcessPointClouds() {}
 
 
-//de-constructor:
+//destructor:
 template<typename PointT>
 ProcessPointClouds<PointT>::~ProcessPointClouds() {}
 
@@ -229,7 +229,7 @@ std::vector<typename pcl::PointCloud<PointT>::Ptr> ProcessPointClouds<PointT>::C
     std::vector<typename pcl::PointCloud<PointT>::Ptr> clusters;
 
     // Perform euclidean clustering to group detected obstacles
-    // Creating the KdTree object for the search method of the extraction
+    // Creating the KdTree object for the Search method of the extraction
     // Ref: https://pcl.readthedocs.io/projects/tutorials/en/latest/cluster_extraction.html#cluster-extraction
     typename pcl::search::KdTree<PointT>::Ptr tree (new pcl::search::KdTree<PointT>);
     tree->setInputCloud (cloud);
@@ -294,7 +294,7 @@ void ProcessPointClouds<PointT>::savePcd(typename pcl::PointCloud<PointT>::Ptr c
 
 
 template<typename PointT>
-typename pcl::PointCloud<PointT>::Ptr ProcessPointClouds<PointT>::loadPcd(std::string file)
+typename pcl::PointCloud<PointT>::Ptr ProcessPointClouds<PointT>::LoadPcd(std::string file)
 {
     typename pcl::PointCloud<PointT>::Ptr cloud (new pcl::PointCloud<PointT>);
 
@@ -308,7 +308,7 @@ typename pcl::PointCloud<PointT>::Ptr ProcessPointClouds<PointT>::loadPcd(std::s
 
 
 template<typename PointT>
-std::vector<boost::filesystem::path> ProcessPointClouds<PointT>::streamPcd(std::string dataPath)
+std::vector<boost::filesystem::path> ProcessPointClouds<PointT>::StreamPcd(std::string dataPath)
 {
     std::vector<boost::filesystem::path> paths(boost::filesystem::directory_iterator{dataPath}, boost::filesystem::directory_iterator{});
 
@@ -330,7 +330,7 @@ std::vector<typename pcl::PointCloud<PointT>::Ptr> ProcessPointClouds<PointT>::E
     std::vector<typename pcl::PointCloud<PointT>::Ptr> clusters;
     // --------
     typename KdTree<PointT>::KdTree* tree = new KdTree<PointT>;
-    tree->insert(cloud);
+    tree->Insert(cloud);
 
     // Get indices
     std::vector<std::vector<int>> cluster_indices = EuclideanClusterIndices(cloud,
@@ -380,7 +380,7 @@ ProcessPointClouds<PointT>::EuclideanClusterIndices(typename pcl::PointCloud<Poi
         if(!processed[pointId]){
             std::vector<int> cluster;
 
-            clusterHelper(pointId,
+            ClusterHelper(pointId,
                           cloud,
                           cluster,
                           processed,
@@ -397,7 +397,7 @@ ProcessPointClouds<PointT>::EuclideanClusterIndices(typename pcl::PointCloud<Poi
 }
 
 template<typename PointT>
-void ProcessPointClouds<PointT>::clusterHelper(int pointID,
+void ProcessPointClouds<PointT>::ClusterHelper(int pointID,
                                                typename pcl::PointCloud<PointT>::Ptr cloud,
                                                std::vector<int>& cluster,
                                                std::vector<bool>& processed,
@@ -408,13 +408,13 @@ void ProcessPointClouds<PointT>::clusterHelper(int pointID,
     if((processed[pointID] ==false)&&(cluster.size() < maxClusterSize)){ // check on cluster Max numbers of points
         processed[pointID]=true;
         cluster.push_back(pointID);
-        // search for nearby points which is near to this point to add them to this cluster
-        // call search to get the indices of the nearby points
-        std::vector<int> nearset = tree->search(cloud->points[pointID],distanceTolerance);
+        // Search for nearby points which is near to this point to add them to this cluster
+        // call Search to get the indices of the nearby points
+        std::vector<int> nearset = tree->Search(cloud->points[pointID], distanceTolerance);
         // iterate each nearby point
         for(int nearID : nearset){
             if(!processed[nearID])
-                clusterHelper(nearID,
+                ClusterHelper(nearID,
                               cloud,
                               cluster,
                               processed,

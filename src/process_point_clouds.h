@@ -1,7 +1,11 @@
-// PCL library Functions for processing point clouds
-
 #ifndef PROCESSPOINTCLOUDS_H_
 #define PROCESSPOINTCLOUDS_H_
+
+#include <iostream>
+#include <string>
+#include <vector>
+#include <ctime>
+#include <chrono>
 
 #include <pcl/io/pcd_io.h>
 #include <pcl/common/common.h>
@@ -12,11 +16,7 @@
 #include <pcl/segmentation/sac_segmentation.h>
 #include <pcl/segmentation/extract_clusters.h>
 #include <pcl/common/transforms.h>
-#include <iostream> 
-#include <string>  
-#include <vector>
-#include <ctime>
-#include <chrono>
+
 #include "render/box.h"
 #include "kd_tree.h"
 
@@ -26,7 +26,7 @@ public:
 
     //constructor
     ProcessPointClouds();
-    //deconstructor
+    //destructor
     ~ProcessPointClouds();
 
     typename pcl::PointCloud<PointT>::Ptr FilterCloud(typename pcl::PointCloud<PointT>::Ptr cloud, float voxelGridCellSize, Eigen::Vector4f minPoint, Eigen::Vector4f maxPoint);
@@ -43,9 +43,9 @@ public:
 
     void savePcd(typename pcl::PointCloud<PointT>::Ptr cloud, std::string file);
 
-    typename pcl::PointCloud<PointT>::Ptr loadPcd(std::string file);
+    typename pcl::PointCloud<PointT>::Ptr LoadPcd(std::string file);
 
-    std::vector<boost::filesystem::path> streamPcd(std::string dataPath);
+    std::vector<boost::filesystem::path> StreamPcd(std::string dataPath);
 
     std::vector<typename pcl::PointCloud<PointT>::Ptr> EuclideanClustering(typename pcl::PointCloud<PointT>::Ptr cloud,
                                                                            float distanceTolerance,
@@ -59,7 +59,7 @@ private:
                                                           int minClusterSize,
                                                           int maxClusterSize);
 
-    void clusterHelper(int pointID,
+    void ClusterHelper(int pointID,
                        typename pcl::PointCloud<PointT>::Ptr cloud,
                        std::vector<int>& cluster,
                        std::vector<bool>& processed,
