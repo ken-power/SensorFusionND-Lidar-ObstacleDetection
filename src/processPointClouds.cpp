@@ -345,7 +345,7 @@ std::vector<typename pcl::PointCloud<PointT>::Ptr> ProcessPointClouds<PointT>::E
     std::vector<typename pcl::PointCloud<PointT>::Ptr> clusters;
     // --------
     typename KdTree<PointT>::KdTree* tree = new KdTree<PointT>;
-    tree->insertCloud(cloud);
+    tree->insert(cloud);
 
     // Get indices
     std::vector<std::vector<int>> cluster_indices = EuclideanClusterIndices(cloud,

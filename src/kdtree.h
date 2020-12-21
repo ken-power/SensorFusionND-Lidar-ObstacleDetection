@@ -22,14 +22,31 @@ struct Node
 template <typename PointT>
 struct KdTree
 {
-	Node* root;
-
 	KdTree()
 	: root(NULL)
 	{}
 
+    void insert(typename pcl::PointCloud<PointT>::Ptr cloud)
+    {
+        for(unsigned int id =0 ; id < cloud->points.size(); id++){
+            insertHelper(&root, 0, cloud->points[id], id);
+        }
+    }
 
-	void insertHelper(Node** node, uint depth, PointT point, int id)
+
+    // return a list of point ids in the tree that are within distance of target
+    std::vector<int> search(PointT target, float distanceTolerance)
+    {
+        std::vector<int> ids;
+        searchHelper(target, root, 0, distanceTolerance, ids);
+
+        return ids;
+    }
+
+
+private:
+
+    void insertHelper(Node** node, uint depth, PointT point, int id)
     {
 	    std::string location = "";
 
@@ -60,44 +77,30 @@ struct KdTree
     }
 
 
-	void insert(std::vector<float> point, int id)
-	{
-        insertHelper(&root, 0, point, id);
-	}
-
-    void insertCloud(typename pcl::PointCloud<PointT>::Ptr cloud)
+    void searchHelper(PointT target, Node* node, int depth, float distanceTolerance, std::vector<int>& ids)
     {
-        for(unsigned int id =0 ; id < cloud->points.size(); id++){
-            insertHelper(&root, 0, cloud->points[id], id);
-        }
-
-
-    }
-
-	void searchHelper(PointT target, Node* node, int depth, float distanceTolerance, std::vector<int>& ids)
-    {
-	    if(node!=NULL)
+        if(node!=NULL)
         {
-	        if(
-	                (node->point[0] >= (target.data[0]-distanceTolerance) && node->point[0] <=(target.data[0]+distanceTolerance)) &&
-	                (node->point[1] >= (target.data[1]-distanceTolerance) && node->point[1] <=(target.data[1]+distanceTolerance))
-	        )
+            if(
+                    (node->point[0] >= (target.data[0]-distanceTolerance) && node->point[0] <=(target.data[0]+distanceTolerance)) &&
+                    (node->point[1] >= (target.data[1]-distanceTolerance) && node->point[1] <=(target.data[1]+distanceTolerance))
+                    )
             {
-	            float distance = sqrt(
-	                    (node->point[0]-target.data[0]) * (node->point[0]-target.data[0]) +
-	                    (node->point[1]-target.data[1]) * (node->point[1]-target.data[1])
-	                    );
+                float distance = sqrt(
+                        (node->point[0]-target.data[0]) * (node->point[0]-target.data[0]) +
+                        (node->point[1]-target.data[1]) * (node->point[1]-target.data[1])
+                );
 
-	            if(distance <= distanceTolerance)
+                if(distance <= distanceTolerance)
                 {
-	                ids.push_back(node->id);
+                    ids.push_back(node->id);
                 }
             }
 
-	        // check across boundary to determine if we flow to the left or right
-	        if((target.data[depth%2] - distanceTolerance) < node->point[depth%2])
+            // check across boundary to determine if we flow to the left or right
+            if((target.data[depth%2] - distanceTolerance) < node->point[depth%2])
             {
-	            searchHelper(target, node->left, depth+1, distanceTolerance, ids);
+                searchHelper(target, node->left, depth+1, distanceTolerance, ids);
             }
             if((target.data[depth%2] + distanceTolerance) > node->point[depth%2])
             {
@@ -106,14 +109,7 @@ struct KdTree
         }
     }
 
-	// return a list of point ids in the tree that are within distance of target
-	std::vector<int> search(PointT target, float distanceTolerance)
-	{
-		std::vector<int> ids;
-		searchHelper(target, root, 0, distanceTolerance, ids);
-
-		return ids;
-	}
+    Node* root;
 };
 
 
